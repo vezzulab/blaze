@@ -46,7 +46,7 @@ The tag workflow (`.github/workflows/release.yml`) does steps 2 to 5 from a `v*`
 - `display: -moz-box` is invalid now and drops the whole rule. Error pages are drawn by a shadow-DOM component that user CSS cannot reach.
 - Release Firefox rejects unsigned add-ons in the profile folder, even with `xpinstall.signatures.required` off.
 - Never edit Mozilla's `omni.ja` in place with .NET's `ZipArchive`: the engine then does not start. `Rebrand` writes a new standard zip instead (0.4 s start, same as the original).
-- Check the engine you are bumping draws the right-hand tab strip: the Mozilla tarball and Fedora's Firefox 159 differed here (see `CLAUDE.md`). The contract's pixel check covers it.
+- Check the engine you are bumping draws the right-hand tab strip: the Mozilla tarball and Fedora's Firefox 159 differed here (see the open-issues list in the repository notes). The contract's pixel check covers it.
 - Never `pkill -f <pattern>` where the same command line also contains the pattern: it kills your own shell. Use the `[x]yz` bracket trick in its own command.
 - Unix socket paths are limited to about 108 characters.
 
