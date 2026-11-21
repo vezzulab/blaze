@@ -94,12 +94,12 @@ Una página liviana en una línea rápida puede tardar minutos en una mala. Blaz
 **AppImage (Linux x86_64)**
 
 ```bash
-# 1. descarga Blaze-0.1.1-x86_64.AppImage (y SHA256SUMS y SHA256SUMS.sig para verificarlo) desde la página de Releases
+# 1. descarga Blaze-0.1.2-x86_64.AppImage (y SHA256SUMS y SHA256SUMS.sig para verificarlo) desde la página de Releases
 chmod +x Blaze-*-x86_64.AppImage
 ./Blaze-*-x86_64.AppImage
 ```
 
-La versión actual, **0.1.1** (software en alfa), publicada en la [página de Releases](https://github.com/vezzulab/blaze/releases) con su firma. **No uses la 0.1.0**: trae un Firefox desactualizado. ¿Prefieres compilarlo tú? Mira abajo. El primer arranque descarga Firefox 160.0.1 desde archive.mozilla.org (87 MB), lo verifica contra el SHA-256 fijado en [`engine.env`](engine.env) e instala las cuatro extensiones (unos 38 MB, de los que Bitwarden son 28). Si lo interrumpes, se reanuda. Después Firefox baja unos 49 MB en segundo plano (medido con Firefox 160.0.1: datos y listas de Mozilla 26, Widevine 17, Safe Browsing 6,5). En total unos 175 MB la primera vez; luego un arranque es casi silencioso. Con una conexión lenta, deja el primer arranque terminando.
+La versión actual, **0.1.2** (software en alfa), publicada en la [página de Releases](https://github.com/vezzulab/blaze/releases) con su firma. **No uses la 0.1.0**: trae un Firefox desactualizado. ¿Prefieres compilarlo tú? Mira abajo. El primer arranque descarga Firefox 160.0.1 desde archive.mozilla.org (87 MB), lo verifica contra el SHA-256 fijado en [`engine.env`](engine.env) e instala las cuatro extensiones (unos 38 MB, de los que Bitwarden son 28). Si lo interrumpes, se reanuda. Después Firefox baja unos 49 MB en segundo plano (medido con Firefox 160.0.1: datos y listas de Mozilla 26, Widevine 17, Safe Browsing 6,5). En total unos 175 MB la primera vez; luego un arranque es casi silencioso. Con una conexión lenta, deja el primer arranque terminando.
 
 **Desde el código** (necesita el SDK de .NET 10 con soporte AOT, `python3`, `curl`, `tar`, `xz`)
 
@@ -165,7 +165,7 @@ flowchart LR
 - El motor de descargas todavía no está conectado al botón de descargas de Firefox. Hoy descarga los componentes de Blaze (el motor, las extensiones, las actualizaciones) y se maneja desde una terminal: `blaze-agent get <url> --dir <carpeta>`.
 - Firefox de versión final solo acepta extensiones firmadas por Mozilla. Por eso Blaze carga su extensión Lite como complemento temporal en cada arranque, por un socket Unix privado que se cierra enseguida. Funciona, pero no es una instalación permanente.
 - Fijar Firefox significa que las correcciones de seguridad de Firefox te llegan **a través de las versiones de Blaze**, no por sí solas. Seguir el ritmo de versiones de Firefox es una regla de mantenimiento del proyecto ([docs/MAINTAINING.md](docs/MAINTAINING.md)), y el aviso de actualización es la forma de recibir esas correcciones.
-- **Blaze 0.1.0 distribuyó un Firefox desactualizado (159.0)** al que le faltan las correcciones de más de 100 CVE publicados desde entonces, incluidos escapes del sandbox. La versión 0.1.1 fija Firefox 160.0.1. Si instalaste la 0.1.0, actualiza y evita inicios de sesión sensibles hasta hacerlo. Es el costo de fijar el motor; ver [SECURITY.md](SECURITY.md).
+- **Blaze 0.1.0 distribuyó un Firefox desactualizado (159.0)** al que le faltan las correcciones de más de 100 CVE publicados desde entonces, incluidos escapes del sandbox. Las versiones 0.1.1 y posteriores fijan Firefox 160.0.1. Si instalaste la 0.1.0, actualiza y evita inicios de sesión sensibles hasta hacerlo. Es el costo de fijar el motor; ver [SECURITY.md](SECURITY.md).
 - Privacy Badger y Bitwarden pueden abrir una pestaña de bienvenida la primera vez que se instalan. En los primeros 70 segundos no medimos conexiones a sus propios servidores, pero no observamos una ventana normal.
 - El cambio de marca reescribe dos de los archivos de recursos del motor en tu máquina al instalarlo, como zips limpios. Firefox no se recompila.
 - Solo Linux x86_64. Los flujos de CI están escritos pero todavía no se han ejecutado.

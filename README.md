@@ -94,12 +94,12 @@ A page that is light on a fast line can take minutes on a bad one. Blaze attacks
 **AppImage (Linux x86_64)**
 
 ```bash
-# 1. download Blaze-0.1.1-x86_64.AppImage (plus SHA256SUMS and SHA256SUMS.sig to verify it) from the Releases page
+# 1. download Blaze-0.1.2-x86_64.AppImage (plus SHA256SUMS and SHA256SUMS.sig to verify it) from the Releases page
 chmod +x Blaze-*-x86_64.AppImage
 ./Blaze-*-x86_64.AppImage
 ```
 
-The current release, **0.1.1** (alpha software), published on the [Releases page](https://github.com/vezzulab/blaze/releases) with its signature. **Do not use 0.1.0**: it ships an out-of-date Firefox. Prefer to build it yourself? See below. The first start downloads Firefox 160.0.1 from archive.mozilla.org (87 MB), verifies it against the SHA-256 pinned in [`engine.env`](engine.env), and installs the four extensions (about 38 MB, of which Bitwarden is 28). Interrupt it and it resumes. Firefox then fetches about 49 MB in the background (measured on Firefox 160.0.1: Mozilla's blocklists and data 26, Widevine 17, Safe Browsing 6.5). Altogether about 175 MB the first time, then a start is nearly silent. On a slow link, leave the first start running.
+The current release, **0.1.2** (alpha software), published on the [Releases page](https://github.com/vezzulab/blaze/releases) with its signature. **Do not use 0.1.0**: it ships an out-of-date Firefox. Prefer to build it yourself? See below. The first start downloads Firefox 160.0.1 from archive.mozilla.org (87 MB), verifies it against the SHA-256 pinned in [`engine.env`](engine.env), and installs the four extensions (about 38 MB, of which Bitwarden is 28). Interrupt it and it resumes. Firefox then fetches about 49 MB in the background (measured on Firefox 160.0.1: Mozilla's blocklists and data 26, Widevine 17, Safe Browsing 6.5). Altogether about 175 MB the first time, then a start is nearly silent. On a slow link, leave the first start running.
 
 **From source** (needs the .NET 10 SDK with AOT support, `python3`, `curl`, `tar`, `xz`)
 
@@ -165,7 +165,7 @@ flowchart LR
 - The download engine is not yet connected to Firefox's download button. Today it downloads Blaze's own components (the engine, the extensions, updates) and can be driven from a terminal: `blaze-agent get <url> --dir <folder>`.
 - Release Firefox only accepts Mozilla-signed add-ons. Blaze therefore loads its Lite extension as a temporary add-on on each start, over a private Unix socket that is closed right after. It works, but it is not a permanent install.
 - Pinning Firefox means Firefox's security fixes reach you **through Blaze releases**, not on their own. Following Firefox's release cadence is a maintenance rule of this project ([docs/MAINTAINING.md](docs/MAINTAINING.md)), and the update prompt is how you receive those fixes.
-- **Blaze 0.1.0 shipped an out-of-date Firefox (159.0)** that lacks fixes for more than 100 CVEs published since, including sandbox escapes. Version 0.1.1 pins Firefox 160.0.1. If you installed 0.1.0, update, and avoid sensitive logins until you do. This is the cost of pinning the engine; see [SECURITY.md](SECURITY.md).
+- **Blaze 0.1.0 shipped an out-of-date Firefox (159.0)** that lacks fixes for more than 100 CVEs published since, including sandbox escapes. Versions 0.1.1 and later pin Firefox 160.0.1. If you installed 0.1.0, update, and avoid sensitive logins until you do. This is the cost of pinning the engine; see [SECURITY.md](SECURITY.md).
 - Privacy Badger and Bitwarden may open a welcome tab the first time they install. We measured no connection to their own servers in the first 70 seconds, but did not watch a normal window.
 - Rebranding rewrites two of the engine's resource archives on your machine at install time, as clean zip files. Firefox itself is not recompiled.
 - Linux x86_64 only. CI workflows are written but have not run yet.
