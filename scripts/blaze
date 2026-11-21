@@ -19,10 +19,27 @@ DATA="${XDG_DATA_HOME:-$HOME/.local/share}/blaze"
 PROFILE="${BLAZE_PROFILE:-$DATA/profile}"
 ENGINE_ROOT="$DATA/engine"
 
+ICON="${APPDIR:+$APPDIR/blaze.png}"; [ -f "${ICON:-}" ] || ICON="$SHARE/assets/blaze.svg"; [ -f "$ICON" ] || ICON=blaze
+
+# Messages go to the terminal AND, when there is a desktop, to a notification: Blaze is usually started from a file
+# manager or a menu, where stderr is invisible. Without this a first start (minutes of downloading, no window yet)
+# looks exactly like "it does not run".
+notify() { command -v notify-send >/dev/null 2>&1 || return 0; notify-send -a Blaze -i "$ICON" "$@" 2>/dev/null || true; }
 say()  { printf 'blaze: %s\n' "$*" >&2; }
-die()  { printf 'blaze: error: %s\n' "$*" >&2; exit 1; }
+die()  { printf 'blaze: error: %s\n' "$*" >&2; notify -u critical "Blaze could not start" "$*"; exit 1; }
 [ -x "$AGENT" ] || die "agent not found at $AGENT (build it: dotnet publish src/Blaze.Agent -c Release -r linux-x64 -o dist/agent)"
 mkdir -p "$DATA"
+
+# One Blaze at a time. A second start (people click again when nothing seems to happen) would download the same
+# engine into the same files, or fight over the profile lock. The lock lives as long as Blaze does.
+if command -v flock >/dev/null 2>&1; then
+  exec 9>"$DATA/.launcher.lock"
+  if ! flock -n 9; then
+    say "Blaze is already starting or running"
+    notify "Blaze is already running" "It is starting up or already open. If this is the first start it is still downloading Firefox: please wait."
+    exit 0
+  fi
+fi
 
 # ---------------------------------------------------------------- 1. engine
 # shellcheck source=/dev/null
@@ -46,12 +63,26 @@ install_engine() {
 
   say "first run: downloading Firefox $v ($locale) from archive.mozilla.org (resumable; safe to interrupt)"
   mkdir -p "$ENGINE_ROOT/dl"
+  local pf="$ENGINE_ROOT/dl/progress" nid=""
+  rm -f "$pf"
+  nid="$(notify -p -t 0 -h int:value:0 "Blaze is getting ready" "First start: downloading Firefox (86 MB). You can leave this running or close it; it resumes where it stopped." )"
   "$AGENT" get "https://archive.mozilla.org/pub/firefox/releases/$v/linux-x86_64/$locale/firefox-$v.tar.xz" \
-      --dir "$ENGINE_ROOT/dl" --name "$tar" --connections 4 --quiet >/dev/null
+      --dir "$ENGINE_ROOT/dl" --name "$tar" --connections 4 --quiet --progress-file "$pf" >/dev/null &
+  local apid=$! last=-1 pct got total
+  while kill -0 "$apid" 2>/dev/null; do
+    pct=""; read -r pct got total < "$pf" 2>/dev/null || true       # no trailing newline would make read return 1
+    if [ -n "$pct" ] && [ "$pct" != "$last" ]; then
+      last="$pct"; say "downloading Firefox: ${pct}% ($((got / 1048576)) of $((total / 1048576)) MB)"
+      [ -n "$nid" ] && notify -r "$nid" -t 0 -h "int:value:$pct" "Blaze is getting ready: ${pct}%" "Downloading Firefox: $((got / 1048576)) of $((total / 1048576)) MB. It resumes if you close it."
+    fi
+    sleep 2
+  done
+  wait "$apid" || die "Could not download Firefox (check your connection). Open Blaze again to resume where it stopped."
   say "verifying SHA-256"
   if ! printf '%s  %s\n' "$want" "$ENGINE_ROOT/dl/$tar" | sha256sum -c --status -; then
     rm -f "$ENGINE_ROOT/dl/$tar"; die "Firefox download failed its checksum; deleted. Run Blaze again to retry."
   fi
+  [ -n "$nid" ] && notify -r "$nid" -t 0 -h int:value:100 "Blaze is getting ready" "Unpacking Firefox..."
   rm -rf "$dir.tmp"; mkdir -p "$dir.tmp"
   tar -xJf "$ENGINE_ROOT/dl/$tar" -C "$dir.tmp"
   rm -rf "$dir"; mv "$dir.tmp" "$dir"

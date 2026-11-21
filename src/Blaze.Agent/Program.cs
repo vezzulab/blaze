@@ -36,7 +36,7 @@ static string Size(double b) => b switch
 
 if (args.Length == 0 || args[0] is "-h" or "--help")
 {
-    Console.WriteLine("usage: blaze-agent get <url> [--dir DIR] [--name FILE] [--connections N] [--limit KBps] [--state FILE]\n       blaze-agent list [--state FILE]\n       blaze-agent addon-install (--socket PATH | --port N) --path DIR [--wait SECONDS]");
+    Console.WriteLine("usage: blaze-agent get <url> [--dir DIR] [--name FILE] [--connections N] [--limit KBps] [--state FILE] [--progress-file FILE] [--quiet]\n       blaze-agent list [--state FILE]\n       blaze-agent addon-install (--socket PATH | --port N) --path DIR [--wait SECONDS]");
     return 2;
 }
 
@@ -155,6 +155,7 @@ var job = manager.FindOpen(url, dir) ?? manager.Add(url, dir, int.TryParse(Opt(a
 if (job.Status == DownloadStatus.Paused || job.Status == DownloadStatus.Failed) manager.Resume(job.Id);
 
 bool quiet = args.Contains("--quiet");
+var progressFile = Opt(args, "--progress-file", "");
 using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
 
@@ -165,6 +166,7 @@ try
         await Task.Delay(500, cts.Token);
         double pct = job.TotalBytes > 0 ? 100.0 * job.DownloadedBytes / job.TotalBytes : 0;
         var eta = job.BytesPerSecond > 1 && job.TotalBytes > 0 ? TimeSpan.FromSeconds((job.TotalBytes - job.DownloadedBytes) / job.BytesPerSecond) : (TimeSpan?)null;
+        if (progressFile.Length > 0) { try { File.WriteAllText(progressFile, $"{(int)pct} {job.DownloadedBytes} {job.TotalBytes}\n"); } catch { } }
         if (!quiet) Console.Error.Write($"\r{pct,5:F1}%  {Size(job.DownloadedBytes)}/{(job.TotalBytes >= 0 ? Size(job.TotalBytes) : "?")}  {Size(job.BytesPerSecond)}/s  " +
                             $"ETA {(eta is { } t ? t.ToString(@"hh\:mm\:ss") : "--:--:--")}  [{job.Status}]{(job.Status == DownloadStatus.WaitingForNetwork ? " " + job.Notice : "")}   ");
     }
