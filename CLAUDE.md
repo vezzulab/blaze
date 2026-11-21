@@ -60,4 +60,4 @@ packaging/build-appimage.sh
 - Opening extra tabs through Marionette (`NewWindow`) also hides the strip in the automated setup; the contract takes its screenshot before that.
 - Privacy Badger opens a welcome tab on a fresh profile (the contract closes it before looking).
 - Planned: connect the download engine to Firefox's download button; per-site Lite exceptions; own new-tab and downloads panel; AMO-signed companion extension; default-browser integration.
-- CI workflows are written but have never run. No release has been published yet; the website's download button points to the releases page.
+- CI workflows are written but have never run. Release v0.1.0 (pre-release, signed with the key in ~/.config/blaze-signing) is published; its first start from scratch was tested headless (192 s). The website's download button points to the releases page.
