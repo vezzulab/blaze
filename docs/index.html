@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Blaze, a Firefox-based browser for slow connections</title>
-  <meta name="description" content="Blaze is a Firefox-based browser built for speed and a light footprint: Lite mode, downloads that resume, uBlock Origin and Privacy Badger preinstalled, and updates you decide.">
+  <meta name="description" content="Blaze is a Firefox-based browser built for speed and a light footprint: Lite mode, downloads that resume, uBlock Origin, Privacy Badger, cookie-notice blocking and Bitwarden preinstalled, and updates you decide.">
   <meta name="theme-color" content="#14141a">
   <link rel="icon" href="assets/blaze.svg" type="image/svg+xml">
   <link rel="preload" href="assets/fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -33,7 +33,7 @@
   <div class="wrap hero">
     <div>
       <h1>Open the web on a bad connection.</h1>
-      <p class="lede">Blaze is a Firefox-based browser built for speed and a light footprint. It downloads less for every page, remembers where a download stopped, and keeps uBlock Origin and Privacy Badger.</p>
+      <p class="lede">Blaze is a Firefox-based browser built for speed and a light footprint. It downloads less for every page, remembers where a download stopped, and comes with uBlock Origin, Privacy Badger, a cookie-notice blocker and Bitwarden.</p>
       <div class="actions">
         <a class="btn" href="https://github.com/vezzulab/blaze/releases/latest">Get the AppImage</a>
         <a href="https://github.com/vezzulab/blaze">Read the source on GitHub</a>
@@ -69,7 +69,7 @@
       <h2 id="look">Flat, compact and two-toned</h2>
       <figure class="shots">
         <div class="shot">
-          <img src="assets/blaze-ash.png" width="1280" height="380" alt="Blaze in its light theme, Ash: a rounded address bar and, at the top right, the uBlock Origin and Privacy Badger icons and the Lite switch." loading="lazy">
+          <img src="assets/blaze-ash.png" width="1280" height="380" alt="Blaze in its light theme, Ash: a short toolbar: back, reload, home, a rounded address bar that searches with DuckDuckGo, the extensions menu, library and the Lite switch." loading="lazy">
           <figcaption>Ash, the light theme.</figcaption>
         </div>
         <div class="shot">
@@ -96,7 +96,7 @@
         </div>
         <div>
           <dt>Your extensions</dt>
-          <dd>uBlock Origin and Privacy Badger come installed. Anything else from addons.mozilla.org installs the usual way.</dd>
+          <dd>uBlock Origin, Privacy Badger, I Still Don't Care About Cookies and Bitwarden come installed and tucked into one menu, so the toolbar stays clean. Anything else from addons.mozilla.org installs the usual way.</dd>
         </div>
         <div>
           <dt>Spotify and Netflix work</dt>
@@ -139,7 +139,7 @@
         </table>
       </div>
       <p>Blaze is still Firefox. A tab playing video costs what a tab playing video costs, and about 500 MB for one tab is the floor we found with this engine. We cannot honestly say Blaze is the lightest browser there is: we only measured Firefox, and tiny browsers that skip the modern web will always use less.</p>
-      <p>The first start is not light. Blaze downloads Firefox once (87 MB, verified against a published checksum), then Firefox fetches about 43 MB in the background: Widevine 17 MB, Safe Browsing lists 10 MB, Mozilla blocklists 8 MB, and the uBlock Origin and Privacy Badger lists 5 MB. All of it can resume if the link drops.</p>
+      <p>The first start is not light. Blaze downloads Firefox once (87 MB, verified against a published checksum), the four extensions come to about 38 MB (Bitwarden alone is 28), and Firefox then fetches about 49 MB in the background: Mozilla's data and blocklists 26 MB, Widevine 17 MB and Safe Browsing lists 6.5 MB. Around 175 MB the first time, and all of it can resume if the link drops.</p>
     </div>
   </section>
 
@@ -168,7 +168,7 @@
       <a href="https://github.com/vezzulab/blaze/blob/main/LICENSE">MIT license</a>
     </div>
     <p>Blaze is not affiliated with or endorsed by Mozilla. Firefox is a trademark of the Mozilla Foundation. Blaze uses the official Firefox and does not change its code. On your machine it only replaces Firefox's name and error-page artwork with Blaze's.</p>
-    <p>This page weighs about 109 KB, has no scripts and loads nothing from other sites.</p>
+    <p>This page weighs about 113 KB, has no scripts and loads nothing from other sites.</p>
   </div>
 </footer>
 </body>

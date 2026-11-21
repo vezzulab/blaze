@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Blaze, un navegador basado en Firefox para conexiones lentas</title>
-  <meta name="description" content="Blaze es un navegador basado en Firefox, pensado para la velocidad y la ligereza: modo Lite, descargas que se reanudan, uBlock Origin y Privacy Badger preinstalados, y actualizaciones que decides tú.">
+  <meta name="description" content="Blaze es un navegador basado en Firefox, pensado para la velocidad y la ligereza: modo Lite, descargas que se reanudan, uBlock Origin, Privacy Badger, bloqueo de avisos de cookies y Bitwarden preinstalados, y actualizaciones que decides tú.">
   <meta name="theme-color" content="#14141a">
   <link rel="icon" href="../assets/blaze.svg" type="image/svg+xml">
   <link rel="preload" href="../assets/fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
@@ -33,7 +33,7 @@
   <div class="wrap hero">
     <div>
       <h1>Abre la web con una mala conexión.</h1>
-      <p class="lede">Blaze es un navegador basado en Firefox, pensado para la velocidad y la ligereza. Descarga menos por cada página, recuerda dónde se quedó una descarga y conserva uBlock Origin y Privacy Badger.</p>
+      <p class="lede">Blaze es un navegador basado en Firefox, pensado para la velocidad y la ligereza. Descarga menos por cada página, recuerda dónde se quedó una descarga y trae uBlock Origin, Privacy Badger, un bloqueador de avisos de cookies y Bitwarden.</p>
       <div class="actions">
         <a class="btn" href="https://github.com/vezzulab/blaze/releases/latest">Descargar el AppImage</a>
         <a href="https://github.com/vezzulab/blaze">Ver el código en GitHub</a>
@@ -69,7 +69,7 @@
       <h2 id="look">Plano, compacto y en dos tonos</h2>
       <figure class="shots">
         <div class="shot">
-          <img src="../assets/blaze-ash.png" width="1280" height="380" alt="Blaze en su tema claro, Ash: barra de direcciones redondeada y, arriba a la derecha, los iconos de uBlock Origin y Privacy Badger y el interruptor Lite." loading="lazy">
+          <img src="../assets/blaze-ash.png" width="1280" height="380" alt="Blaze en su tema claro, Ash: una barra corta: atrás, recargar, inicio, una barra de direcciones redondeada que busca con DuckDuckGo, el menú de extensiones, la biblioteca y el interruptor Lite." loading="lazy">
           <figcaption>Ash, el tema claro.</figcaption>
         </div>
         <div class="shot">
@@ -96,7 +96,7 @@
         </div>
         <div>
           <dt>Tus extensiones</dt>
-          <dd>uBlock Origin y Privacy Badger vienen instaladas. Cualquier otra de addons.mozilla.org se instala como siempre.</dd>
+          <dd>uBlock Origin, Privacy Badger, I Still Don't Care About Cookies y Bitwarden vienen instaladas y guardadas en un solo menú, para que la barra quede limpia. Cualquier otra de addons.mozilla.org se instala como siempre.</dd>
         </div>
         <div>
           <dt>Spotify y Netflix funcionan</dt>
@@ -139,7 +139,7 @@
         </table>
       </div>
       <p>Blaze sigue siendo Firefox. Una pestaña con video cuesta lo que cuesta una pestaña con video, y unos 500 MB para una pestaña es el piso que encontramos con este motor. No podemos decir con honestidad que Blaze sea el navegador más ligero que existe: solo medimos Firefox, y los navegadores diminutos que dejan fuera la web moderna siempre usarán menos.</p>
-      <p>El primer arranque no es ligero. Blaze descarga Firefox una vez (87 MB, verificado contra un checksum publicado) y después Firefox baja unos 43 MB en segundo plano: Widevine 17 MB, listas de Safe Browsing 10 MB, listas de bloqueo de Mozilla 8 MB y las listas de uBlock Origin y Privacy Badger 5 MB. Todo se puede reanudar si la conexión se cae.</p>
+      <p>El primer arranque no es ligero. Blaze descarga Firefox una vez (87 MB, verificado contra un checksum publicado) las cuatro extensiones suman unos 38 MB (solo Bitwarden son 28) y después Firefox baja unos 49 MB en segundo plano: datos y listas de Mozilla 26 MB, Widevine 17 MB y listas de Safe Browsing 6,5 MB. Unos 175 MB la primera vez, y todo se puede reanudar si la conexión se cae.</p>
     </div>
   </section>
 
@@ -168,7 +168,7 @@
       <a href="https://github.com/vezzulab/blaze/blob/main/LICENSE">Licencia MIT</a>
     </div>
     <p>Blaze no está afiliado ni respaldado por Mozilla. Firefox es una marca de la Mozilla Foundation. Blaze usa el Firefox oficial y no cambia su código. En tu máquina solo sustituye el nombre de Firefox y las ilustraciones de error por las de Blaze.</p>
-    <p>Esta página pesa unos 109 KB, no tiene scripts y no carga nada de otros sitios.</p>
+    <p>Esta página pesa unos 113 KB, no tiene scripts y no carga nada de otros sitios.</p>
   </div>
 </footer>
 </body>

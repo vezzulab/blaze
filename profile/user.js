@@ -88,7 +88,7 @@ user_pref("browser.newtabpage.activity-stream.feeds.section.topstories", false);
 user_pref("browser.newtabpage.activity-stream.feeds.topsites", false);
 user_pref("browser.newtabpage.activity-stream.showSponsored", false);
 user_pref("browser.newtabpage.activity-stream.showSponsoredTopSites", false);
-user_pref("browser.startup.homepage", "about:blank");
+user_pref("browser.startup.homepage", "https://start.duckduckgo.com");   // @default:homepage  (first run only; changeable in Settings > Home)
 user_pref("browser.startup.page", 3);                     // restore previous session
 user_pref("extensions.pocket.enabled", false);
 user_pref("browser.urlbar.suggest.quicksuggest.sponsored", false);
@@ -177,3 +177,8 @@ user_pref("browser.region.network.url", "");               // do not ask Mozilla
 user_pref("browser.region.local-geocoding", false);
 user_pref("media.gmp-gmpopenh264.visible", false);
 user_pref("media.gmp-gmpopenh264.autoupdate", false);
+
+// ---------- Default toolbar (the owner's own layout). First run only, tagged @default:layout; users change it freely afterwards ----------
+user_pref("browser.uiCustomization.state", "{\"placements\":{\"nav-bar\":[\"sidebar-button\",\"forward-button\",\"back-button\",\"stop-reload-button\",\"home-button\",\"vertical-spacer\",\"urlbar-container\",\"downloads-button\",\"fxa-toolbar-menu-button\",\"reset-pbm-toolbar-button\",\"unified-extensions-button\",\"new-tab-button\",\"alltabs-button\",\"smartwindow-group-tabs-button\",\"ai-window-toggle\",\"blaze-companion_blaze_local-browser-action\",\"library-button\"],\"vertical-tabs\":[\"tabbrowser-tabs\"],\"TabsToolbar\":[],\"toolbar-menubar\":[\"menubar-items\"],\"PersonalToolbar\":[\"personal-bookmarks\"],\"unified-extensions-area\":[\"ublock0_raymondhill_net-browser-action\",\"jid1-mnnxcxisbpnsxq_jetpack-browser-action\",\"idcac-pub_guus_ninja-browser-action\",\"_446900e4-71c2-419f-a6a7-df9c091e268b_-browser-action\"],\"widget-overflow-fixed-list\":[]},\"seen\":[\"reset-pbm-toolbar-button\",\"ublock0_raymondhill_net-browser-action\",\"jid1-mnnxcxisbpnsxq_jetpack-browser-action\",\"smartwindow-group-tabs-button\",\"ai-window-toggle\",\"developer-button\",\"screenshot-button\",\"blaze-companion_blaze_local-browser-action\",\"_446900e4-71c2-419f-a6a7-df9c091e268b_-browser-action\",\"idcac-pub_guus_ninja-browser-action\"],\"dirtyAreaCache\":[\"PersonalToolbar\",\"TabsToolbar\",\"nav-bar\",\"toolbar-menubar\",\"unified-extensions-area\",\"vertical-tabs\"],\"currentVersion\":28,\"newElementCount\":10}");   // @default:layout  (first run only; the owner's own toolbar, extensions grouped in the dropdown)
+user_pref("sidebar.main.tools", "opentabs,bookmarks,aichat,history,syncedtabs,passwords,{446900e4-71c2-419f-a6a7-df9c091e268b}");   // @default:layout
+user_pref("sidebar.installed.extensions", "{446900e4-71c2-419f-a6a7-df9c091e268b}");   // @default:layout

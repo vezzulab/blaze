@@ -13,10 +13,11 @@ We ran Blaze's pinned Firefox 159 (headless, Linux) through a counting proxy ([`
 | Host | When | What for |
 |---|---|---|
 | `archive.mozilla.org` | First start, and when a Blaze release pins a new Firefox | Downloads the Firefox engine (87 MB). Verified against a checksum pinned in this repository. |
-| `addons.mozilla.org` | First start | Downloads uBlock Origin and Privacy Badger (Mozilla-signed). |
+| `addons.mozilla.org` | First start | Downloads uBlock Origin, Privacy Badger, I Still Don't Care About Cookies and Bitwarden (Mozilla-signed, about 38 MB; Bitwarden is 28). |
+| `start.duckduckgo.com`, `duckduckgo.com` | When Blaze opens its homepage, and when you search | DuckDuckGo is the default homepage and search engine. It sees your IP address and your searches, as any search engine does. Both are defaults you can change in Settings. |
 | `api.github.com`, `github.com` | Once a day, and on `blaze --update` | Looks for a new Blaze release. Sends your IP address and the User-Agent `Blaze-Updater`; no identifier, no version of your system. Turn it off with `BLAZE_NO_UPDATE_CHECK=1`. |
 
-## What Firefox contacts underneath (first start, 43 MB in total)
+## What Firefox contacts underneath (first start, about 49 MB in 70 s on Firefox 160.0.1; the table below is from the earlier 159.0 measurement)
 
 | Host | Size | Purpose (our reading) |
 |---|---:|---|
@@ -35,7 +36,7 @@ Hosts we removed after the first measurement showed them: `push.services.mozilla
 
 - **Safe Browsing** protects you from phishing, and it talks to Google. Per Mozilla's documentation Firefox downloads lists of hash prefixes and asks Google for full hashes only when a visited URL matches a prefix, so Google sees a prefix, not the address. If you prefer no contact at all, turn it off and accept no phishing warnings. It is on by default because it protects people who would not know to turn it on.
 - **DRM** is a closed-source module from Google. It runs in Firefox's plugin sandbox. It is on by default because Spotify and Netflix need it; turn it off if you do not.
-- **Extensions** make their own connections. uBlock Origin and Privacy Badger update their lists as shown above.
+- **Extensions** make their own connections. uBlock Origin and Privacy Badger update their lists as shown above. **Bitwarden** talks to Bitwarden's servers once you sign in and sync your vault. **I Still Don't Care About Cookies** is the community-maintained fork of the original extension (which Avast bought in 2022); it declares that it collects no data. In our 70-second first-run measurement neither contacted its own servers; we did not watch a normal window, where an extension may open a welcome page.
 - **Your IP address** is visible to every server above, as it is to any site you visit. Blaze does not hide it; use a VPN or Tor for that.
 
 ## Data on your disk

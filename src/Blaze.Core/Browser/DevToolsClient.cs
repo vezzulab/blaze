@@ -9,17 +9,19 @@ namespace Blaze.Core.Browser;
 /// Mozilla-signed add-ons from disk, but accepts a temporary add-on installed over this channel. This lets the
 /// Blaze AppImage load its companion extension without Node.js. Start Firefox with `-start-debugger-server PORT`.
 /// </summary>
+public sealed record InstallResult(string AddonId, bool ServerClosed);
+
 public static class DevToolsClient
 {
     /// <summary>Preferred: a Unix domain socket inside a 0700 directory, unreachable by other users and by web pages.</summary>
-    public static Task<string> InstallTemporaryAddonAsync(string socketPath, string addonPath, TimeSpan timeout, CancellationToken ct = default)
+    public static Task<InstallResult> InstallTemporaryAddonAsync(string socketPath, string addonPath, TimeSpan timeout, CancellationToken ct = default)
         => InstallAsync(c => ConnectUnixAsync(socketPath, c), addonPath, timeout, ct);
 
     /// <summary>Fallback for engines that cannot listen on a socket. Loopback TCP is reachable by every local user.</summary>
-    public static Task<string> InstallTemporaryAddonAsync(int port, string addonPath, TimeSpan timeout, CancellationToken ct = default)
+    public static Task<InstallResult> InstallTemporaryAddonAsync(int port, string addonPath, TimeSpan timeout, CancellationToken ct = default)
         => InstallAsync(c => ConnectTcpAsync(port, c), addonPath, timeout, ct);
 
-    private static async Task<string> InstallAsync(Func<CancellationToken, Task<Stream>> connect, string addonPath, TimeSpan timeout, CancellationToken ct)
+    private static async Task<InstallResult> InstallAsync(Func<CancellationToken, Task<Stream>> connect, string addonPath, TimeSpan timeout, CancellationToken ct)
     {
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         cts.CancelAfter(timeout);
@@ -52,8 +54,63 @@ public static class DevToolsClient
             if (root.TryGetProperty("error", out var err))
                 throw new InvalidOperationException($"{err.GetString()}: {(root.TryGetProperty("message", out var m) ? m.GetString() : "")}");
             if (root.TryGetProperty("addon", out var addon) && addon.TryGetProperty("id", out var id))
-                return id.GetString() ?? "";
+            {
+                // The channel was only needed to load the extension. Leaving it listening keeps Firefox's "browser is under
+                // remote control" robot on screen for the whole session, so shut the server down as the very last step.
+                var closed = await CloseServerAsync(stream, cts.Token).ConfigureAwait(false);
+                return new InstallResult(id.GetString() ?? "", closed);
+            }
         }
+    }
+
+    // Runs in Firefox's parent process (Browser Console context). Asks for the SAME shared loader that created the
+    // debugger server and closes its listeners. Closing a listener also closes the connections it accepted, so ours
+    // ends here: an EOF after sending this is the success signal.
+    private const string CloseServerScript = """
+        (() => {
+          const { useDistinctSystemPrincipalLoader, releaseDistinctSystemPrincipalLoader } = ChromeUtils.importESModule(
+            "resource://devtools/shared/loader/DistinctSystemPrincipalLoader.sys.mjs", { global: "shared" });
+          const owner = {};
+          const loader = useDistinctSystemPrincipalLoader(owner);
+          try {
+            const { DevToolsServer } = loader.require("resource://devtools/server/devtools-server.js");
+            DevToolsServer.closeAllSocketListeners();
+          } finally { releaseDistinctSystemPrincipalLoader(owner); }
+        })()
+        """;
+
+    private static async Task<bool> CloseServerAsync(Stream stream, CancellationToken ct)
+    {
+        try
+        {
+            await SendAsync(stream, w => { w.WriteString("to", "root"); w.WriteString("type", "listProcesses"); }, ct).ConfigureAwait(false);
+            string? process = null;
+            while (process is null)
+            {
+                using var d = await ReadPacketAsync(stream, ct).ConfigureAwait(false);
+                if (!d.RootElement.TryGetProperty("processes", out var list)) continue;
+                foreach (var p in list.EnumerateArray())
+                    if (p.TryGetProperty("isParent", out var ip) && ip.ValueKind == JsonValueKind.True) { process = p.GetProperty("actor").GetString(); break; }
+                if (process is null) return false;
+            }
+
+            await SendAsync(stream, w => { w.WriteString("to", process); w.WriteString("type", "getTarget"); }, ct).ConfigureAwait(false);
+            string? console = null;
+            while (console is null)
+            {
+                using var d = await ReadPacketAsync(stream, ct).ConfigureAwait(false);
+                if (d.RootElement.TryGetProperty("process", out var pr) && pr.TryGetProperty("consoleActor", out var ca)) console = ca.GetString();
+            }
+
+            await SendAsync(stream, w => { w.WriteString("to", console); w.WriteString("type", "evaluateJSAsync"); w.WriteString("text", CloseServerScript); }, ct).ConfigureAwait(false);
+
+            using var wait = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            wait.CancelAfter(TimeSpan.FromSeconds(5));
+            try { while (true) { using var _ = await ReadPacketAsync(stream, wait.Token).ConfigureAwait(false); } }
+            catch (IOException) { return true; }                       // connection closed by the server = it shut down
+            catch (OperationCanceledException) { return false; }       // still open after 5 s: the script did not run
+        }
+        catch (Exception ex) when (ex is IOException or JsonException or InvalidOperationException or KeyNotFoundException) { return ex is IOException; }
     }
 
     private static async Task<Stream> ConnectUnixAsync(string path, CancellationToken ct)

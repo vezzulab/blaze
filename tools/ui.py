@@ -97,7 +97,9 @@ def make_profile(firefox, scheme):
         r = subprocess.run([os.path.join(REPO, "scripts", "blaze")], env=env, capture_output=True, text=True, timeout=240)
         if r.returncode != 0: raise RuntimeError("scripts/blaze failed:\n" + r.stderr[-600:])
         prof = os.path.join(xdg, "blaze", "profile")
-        with open(f"{prof}/user.js", "a") as f: f.write(f'\nuser_pref("ui.systemUsesDarkTheme", {1 if scheme == "dark" else 0});\n')
+        with open(f"{prof}/user.js", "a") as f:
+            f.write(f'\nuser_pref("ui.systemUsesDarkTheme", {1 if scheme == "dark" else 0});\n')
+            f.write('user_pref("browser.startup.homepage", "about:blank");  // keep the test screenshots blank\n')
         with open(f"{prof}/chrome/userChrome.css", "a") as f:
             f.write("\n#remote-control-box{display:none!important}\n")  # automation stripes
             if os.environ.get("BLAZE_UI_EXTRA_CSS"): f.write(open(os.environ["BLAZE_UI_EXTRA_CSS"]).read())   # test hook
@@ -120,6 +122,8 @@ const out={}; const q=(s)=>document.querySelector(s); const cs=(e)=>e?window.get
 const t=(k,f)=>{try{out[k]=f()}catch(e){out[k]='ERR '+e.message}};
 t('brand',()=>Services.strings.createBundle('chrome://branding/locale/brand.properties').GetStringFromName('brandShortName'));
 t('winctl',()=>{const e=document.querySelector('#nav-bar > .titlebar-buttonbox-container');if(!e)return null;const c=getComputedStyle(e);return {order:c.order,gap:c.marginInlineStart,corner:c.marginInlineEnd,radius:c.borderTopLeftRadius,border:parseFloat(c.borderTopWidth)}});
+t('navIds',()=>CustomizableUI.getWidgetIdsInArea('nav-bar'));
+t('extArea',()=>CustomizableUI.getWidgetIdsInArea('unified-extensions-area'));
 t('back',()=>!!q('#back-button')&&cs(q('#back-button')).display!=='none');
 t('reload',()=>{const r=q('#reload-button');return !!r&&cs(r).display!=='none'});
 t('urlbarBgEl',()=>!!q('#urlbar > .urlbar-background'));
@@ -183,6 +187,17 @@ def check_scheme(firefox, scheme, shot=None):
         ck("engine presents itself as Blaze (brand name)", o["brand"] == "Blaze", f"brandShortName={o['brand']}; run scripts/blaze so the engine is rebranded")
         wc = o["winctl"] if isinstance(o["winctl"], dict) else {}
         ck("window buttons: own bordered group, last in the toolbar, clear of the neighbours and of the window corner", wc.get("order") == "1000" and wc.get("gap") not in (None, "0px") and wc.get("border", 0) >= 1 and wc.get("corner") not in (None, "0px"), str(o["winctl"]))
+        ck("default homepage is declared as DuckDuckGo (first-run default)", 'user_pref("browser.startup.homepage", "https://start.duckduckgo.com");' in open(f"{REPO}/profile/user.js").read())
+        want = ["uBlock0@raymondhill.net", "jid1-MnnxcxisBPnSXQ@jetpack", "idcac-pub@guus.ninja", "{446900e4-71c2-419f-a6a7-df9c091e268b}"]
+        have = [w for w in want if os.path.exists(f"{prof}/extensions/{w}.xpi")]
+        ck("extensions preinstalled: uBlock Origin, Privacy Badger, I Still Don't Care About Cookies, Bitwarden", len(have) == len(want), f"missing: {[w for w in want if w not in have]}")
+        nav = o["navIds"] if isinstance(o["navIds"], list) else []
+        ext = o["extArea"] if isinstance(o["extArea"], list) else []
+        ext_ids = ["ublock0_raymondhill_net-browser-action", "jid1-mnnxcxisbpnsxq_jetpack-browser-action", "idcac-pub_guus_ninja-browser-action", "_446900e4-71c2-419f-a6a7-df9c091e268b_-browser-action"]
+        ck("toolbar: home and library buttons present", "home-button" in nav and "library-button" in nav, str(nav))
+        ck("extensions are grouped in the dropdown, not loose in the toolbar", all(e in ext for e in ext_ids) and not any(e in nav for e in ext_ids), f"in dropdown: {ext}; loose: {[e for e in ext_ids if e in nav]}")
+        eng = m.cmd("WebDriver:ExecuteAsyncScript", {"script": "const done=arguments[arguments.length-1]; const {SearchService}=ChromeUtils.importESModule('moz-src:///toolkit/components/search/SearchService.sys.mjs'); SearchService.init().then(()=>SearchService.getDefault()).then(e=>done(e.name)).catch(e=>done('ERR '+e));", "args": []})["value"]
+        ck("default search engine is DuckDuckGo", eng == "DuckDuckGo", str(eng))
         ck("back + reload buttons exist", o["back"] is True and o["reload"] is True, f"back={o['back']} reload={o['reload']}")
         ck("urlbar background element is .urlbar-background", o["urlbarBgEl"] is True)
         ub = o["urlbarBg"] if isinstance(o["urlbarBg"], dict) else {}

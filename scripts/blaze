@@ -117,6 +117,7 @@ write_policies() {   # $1 = firefox dir ; rewritten on every start so policy cha
     "OverrideFirstRunPage": "",
     "OverridePostUpdatePage": "",
     "EncryptedMediaExtensions": { "Enabled": $eme, "Locked": false },
+    "SearchEngines": { "Default": "DuckDuckGo" },
     "UserMessaging": {
       "ExtensionRecommendations": false, "FeatureRecommendations": false, "UrlbarInterventions": false,
       "SkipOnboarding": true, "MoreFromMozilla": false, "FirefoxLabs": false
@@ -136,7 +137,7 @@ else LOCALE="$(pick_locale)"; install_engine "$LOCALE"; FIREFOX="$ENGINE_ROOT/$F
 # no-op when nothing changed. Off with BLAZE_NO_REBRAND=1.
 if [ -z "${BLAZE_FIREFOX:-}" ] && [ "${BLAZE_NO_REBRAND:-}" != 1 ]; then
   if r="$("$AGENT" rebrand --dir "$(dirname "$FIREFOX")" --name Blaze \
-        --css "$SHARE/profile/error-pages.css" --assets "$SHARE/profile/error-illustrations" 2>&1)"; then
+        --css "$SHARE/profile/error-pages.css" --assets "$SHARE/profile/error-illustrations,$SHARE/profile/branding" 2>&1)"; then
     [ "$r" = REBRANDED ] && rm -rf "$PROFILE/startupCache"
   else say "could not apply Blaze branding, continuing with Firefox's own: $r"; fi
 fi
@@ -151,7 +152,7 @@ running() { pgrep -f -- "-profile $PROFILE" >/dev/null 2>&1; }
 MARK="$PROFILE/.blaze-layout-v1"
 if [ ! -f "$MARK" ] && ! running; then
   [ -f "$PROFILE/prefs.js" ] && sed -i -E '/"(sidebar\.[A-Za-z.]+|browser\.uiCustomization\.[A-Za-z.]+)"/d' "$PROFILE/prefs.js"
-  grep -v -E 'sidebar\.' "$SHARE/profile/user.js" > "$PROFILE/user.js"
+  grep -v -E 'sidebar\.|@default:' "$SHARE/profile/user.js" > "$PROFILE/user.js"
   [ -n "${BLAZE_EXTRA_USERJS:-}" ] && cat "$BLAZE_EXTRA_USERJS" >> "$PROFILE/user.js"
   timeout -s TERM 20 "$FIREFOX" --headless --no-remote --profile "$PROFILE" about:blank >/dev/null 2>&1 || true
   touch "$MARK"
@@ -166,6 +167,13 @@ SIDEBAR_MARK="$PROFILE/.blaze-sidebar-defaults-v1"
 if [ -f "$SIDEBAR_MARK" ]; then grep -v -E 'sidebar\.' "$SHARE/profile/user.js" > "$PROFILE/user.js"
 else cp "$SHARE/profile/user.js" "$PROFILE/user.js"; fi
 [ -n "${BLAZE_EXTRA_USERJS:-}" ] && cat "$BLAZE_EXTRA_USERJS" >> "$PROFILE/user.js"
+# First-run DEFAULTS: lines tagged "@default:<name>" are applied once per profile and then left to the user, because user.js
+# is re-applied on every start and would silently undo a choice made in Settings. A new tag name applies once to existing
+# profiles too (e.g. the homepage).
+PENDING_DEFAULTS=""
+for tag in $(grep -o '@default:[a-z0-9-]*' "$SHARE/profile/user.js" | sort -u | cut -d: -f2); do
+  if [ -f "$PROFILE/.blaze-default-$tag" ]; then sed -i "/@default:$tag/d" "$PROFILE/user.js"; else PENDING_DEFAULTS="$PENDING_DEFAULTS $tag"; fi
+done
 # Window buttons: by default Blaze draws them itself (right side, separated from navigation). If you would rather have your
 # desktop's own titlebar: BLAZE_SYSTEM_TITLEBAR=1 or  touch ~/.config/blaze/system-titlebar
 if [ "${BLAZE_SYSTEM_TITLEBAR:-}" = 1 ] || [ -e "${XDG_CONFIG_HOME:-$HOME/.config}/blaze/system-titlebar" ]; then
@@ -195,6 +203,8 @@ fetch_addon() {  # id url ; Mozilla signs these, Firefox enforces it
 }
 fetch_addon 'uBlock0@raymondhill.net'     'https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi'
 fetch_addon 'jid1-MnnxcxisBPnSXQ@jetpack' 'https://addons.mozilla.org/firefox/downloads/latest/privacy-badger17/latest.xpi'
+fetch_addon 'idcac-pub@guus.ninja' 'https://addons.mozilla.org/firefox/downloads/latest/istilldontcareaboutcookies/latest.xpi'   # community fork of "I don't care about cookies"
+fetch_addon '{446900e4-71c2-419f-a6a7-df9c091e268b}' 'https://addons.mozilla.org/firefox/downloads/latest/bitwarden-password-manager/latest.xpi'   # 28 MB
 
 [ "${BLAZE_BOOTSTRAP_ONLY:-}" = 1 ] && { say "bootstrap done"; exit 0; }
 
@@ -255,6 +265,7 @@ trap 'rm -rf "$RUNDIR"' EXIT
 SOCK="$RUNDIR/d.sock"
 
 touch "$SIDEBAR_MARK"
+for tag in $PENDING_DEFAULTS; do touch "$PROFILE/.blaze-default-$tag"; done
 "$FIREFOX" --no-remote --profile "$PROFILE" -start-debugger-server "$SOCK" --name Blaze --class Blaze \
     ${BLAZE_HEADLESS:+--headless} "$@" &
 FFPID=$!

@@ -24,7 +24,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/assets/blaze-ember.png" alt="Blaze, tema oscuro (Ember): barra de direcciones redondeada, el interruptor Lite y los iconos de extensiones arriba a la derecha" width="860">
+  <img src="docs/assets/blaze-ember.png" alt="Blaze, tema oscuro (Ember): una barra corta con atrás, recargar, inicio, la barra de direcciones, el menú de extensiones y el interruptor Lite" width="860">
 </p>
 
 ---
@@ -68,7 +68,8 @@ Una página liviana en una línea rápida puede tardar minutos en una mala. Blaz
 |---|---|
 | **Modo Lite** | Un interruptor arriba a la derecha evita que se carguen imágenes, fuentes web y video. Entre 44 % y 61 % menos bytes en páginas de noticias pesadas. |
 | **Descargas que se reanudan** | Motor multiconexión con estado persistente. Sobrevive a un cierre inesperado, un corte de luz o una conexión caída. Verificado con un `kill -9` a mitad de descarga. Mira el [límite](#límites-conocidos) más abajo. |
-| **Extensiones** | uBlock Origin y Privacy Badger preinstalados. Funciona cualquier extensión de addons.mozilla.org. |
+| **Extensiones** | uBlock Origin, Privacy Badger, I Still Don't Care About Cookies y Bitwarden vienen preinstaladas y agrupadas en el menú de extensiones, para que la barra quede limpia. Funciona cualquier extensión de addons.mozilla.org. |
+| **Valores por defecto que puedes cambiar** | DuckDuckGo como página de inicio y buscador, una barra corta (atrás, recargar, inicio, barra de direcciones, menú de extensiones, biblioteca, Lite), las pestañas a la derecha y los botones de ventana como grupo aparte. Se aplican una vez; lo que cambies en Ajustes se conserva. |
 | **DRM** | Widevine está activado, así que Spotify y Netflix funcionan. Un ajuste lo apaga. |
 | **Privado por defecto** | Sin telemetría, sin cuentas, solo HTTPS, protección estricta contra rastreo, sin notificaciones push web, sin consulta de región. Cada servidor con el que Blaze se conecta está en [PRIVACY.md](PRIVACY.md). |
 | **A prueba de actualizaciones** | Blaze fija un Firefox concreto (verificado por checksum) y apaga el actualizador de Firefox, así que una actualización de origen no puede romper la interfaz. Una prueba de contrato de la interfaz vigila cada cambio de motor. |
@@ -98,7 +99,7 @@ chmod +x Blaze-*-x86_64.AppImage
 ./Blaze-*-x86_64.AppImage
 ```
 
-La versión actual, **0.1.1** (software en alfa), publicada en la [página de Releases](https://github.com/vezzulab/blaze/releases) con su firma. **No uses la 0.1.0**: trae un Firefox desactualizado. ¿Prefieres compilarlo tú? Mira abajo. El primer arranque descarga Firefox 160.0.1 desde archive.mozilla.org (87 MB), lo verifica contra el SHA-256 fijado en [`engine.env`](engine.env) e instala uBlock Origin y Privacy Badger. Si lo interrumpes, se reanuda. Después Firefox baja unos 43 MB en segundo plano (Widevine 17, Safe Browsing 10, listas de bloqueo de Mozilla 8, listas de uBlock/Privacy Badger 5). Luego un arranque es casi silencioso.
+La versión actual, **0.1.1** (software en alfa), publicada en la [página de Releases](https://github.com/vezzulab/blaze/releases) con su firma. **No uses la 0.1.0**: trae un Firefox desactualizado. ¿Prefieres compilarlo tú? Mira abajo. El primer arranque descarga Firefox 160.0.1 desde archive.mozilla.org (87 MB), lo verifica contra el SHA-256 fijado en [`engine.env`](engine.env) e instala las cuatro extensiones (unos 38 MB, de los que Bitwarden son 28). Si lo interrumpes, se reanuda. Después Firefox baja unos 49 MB en segundo plano (medido con Firefox 160.0.1: datos y listas de Mozilla 26, Widevine 17, Safe Browsing 6,5). En total unos 175 MB la primera vez; luego un arranque es casi silencioso. Con una conexión lenta, deja el primer arranque terminando.
 
 **Desde el código** (necesita el SDK de .NET 10 con soporte AOT, `python3`, `curl`, `tar`, `xz`)
 
@@ -131,7 +132,7 @@ flowchart LR
     B -- socket Unix privado --> D[Extensión Lite<br/>cargada al arrancar]
     A --> E[Perfil + temas<br/>Ember / Ash]
     B -- diaria, firmada --> F[(GitHub Releases)]
-    C --> G[uBlock Origin<br/>Privacy Badger]
+    C --> G[uBlock Origin, Privacy Badger<br/>avisos de cookies, Bitwarden]
 ```
 
 - **`src/Blaze.Core`**: el motor de descargas (segmentos, `Range` + `If-Range`, fsync antes del estado, reintentos, despertar al volver la red), el actualizador (firma, checksum, reemplazo atómico) y el cliente del depurador que carga la extensión.
@@ -165,7 +166,7 @@ flowchart LR
 - Firefox de versión final solo acepta extensiones firmadas por Mozilla. Por eso Blaze carga su extensión Lite como complemento temporal en cada arranque, por un socket Unix privado que se cierra enseguida. Funciona, pero no es una instalación permanente.
 - Fijar Firefox significa que las correcciones de seguridad de Firefox te llegan **a través de las versiones de Blaze**, no por sí solas. Seguir el ritmo de versiones de Firefox es una regla de mantenimiento del proyecto ([docs/MAINTAINING.md](docs/MAINTAINING.md)), y el aviso de actualización es la forma de recibir esas correcciones.
 - **Blaze 0.1.0 distribuyó un Firefox desactualizado (159.0)** al que le faltan las correcciones de más de 100 CVE publicados desde entonces, incluidos escapes del sandbox. La versión 0.1.1 fija Firefox 160.0.1. Si instalaste la 0.1.0, actualiza y evita inicios de sesión sensibles hasta hacerlo. Es el costo de fijar el motor; ver [SECURITY.md](SECURITY.md).
-- Privacy Badger abre su propia pestaña de bienvenida la primera vez que se instala.
+- Privacy Badger y Bitwarden pueden abrir una pestaña de bienvenida la primera vez que se instalan. En los primeros 70 segundos no medimos conexiones a sus propios servidores, pero no observamos una ventana normal.
 - El cambio de marca reescribe dos de los archivos de recursos del motor en tu máquina al instalarlo, como zips limpios. Firefox no se recompila.
 - Solo Linux x86_64. Los flujos de CI están escritos pero todavía no se han ejecutado.
 

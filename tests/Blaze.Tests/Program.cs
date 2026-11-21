@@ -321,6 +321,11 @@ await Test("22. rebrand: names, error CSS and artwork replaced; trademark line k
         ["localization/es-ES/branding/brand.ftl"] = "-brand-short-name =\n    { $case ->\n        [gen] de Firefox\n       *[nom] Firefox\n    }\n    .gender = masculine\n-vendor-short-name = Mozilla\n",
         ["chrome/en-US/locale/branding/brand.properties"] = "brandShorterName=Firefox\nbrandShortName=Firefox\nbrandFullName=Mozilla Firefox\n",
         ["chrome/toolkit/skin/classic/global/illustrations/kit-concerned.svg"] = fox,
+        ["chrome/browser/content/branding/about-logo.svg"] = "<svg>FIREFOX LOGO</svg>",
+        ["chrome/browser/content/branding/icon16.png"] = "FIREFOX PNG",
+        ["chrome/browser/content/branding/untouched-other.png"] = "KEEP PNG",
+        ["localization/en-US/browser/aboutDialog.ftl"] = "community-exp = <label>{ -vendor-short-name }</label> is a global community.\ncommunity-2 = { -brand-short-name } is designed by <label>{ -vendor-short-name }</label>, a global community.\nhelpus = Want to help?\n",
+        ["localization/es-ES/browser/aboutDialog.ftl"] = "community-2 =\n    { -brand-short-name } está diseñado por <label>{ -vendor-short-name }</label>.\nother = { -brand-short-name } stays.\n",
         ["modules/untouched.sys.mjs"] = "export const x = 1;",
     });
     Jar(Path.Combine(d, "omni.ja"), new()
@@ -332,8 +337,11 @@ await Test("22. rebrand: names, error CSS and artwork replaced; trademark line k
     var assets = Path.Combine(d, "assets"); Directory.CreateDirectory(assets);
     File.WriteAllText(Path.Combine(assets, "no-connection.svg"), "<svg>BLAZE</svg>");
     File.WriteAllText(Path.Combine(assets, "kit-concerned.svg"), "<svg>BLAZE</svg>");
+    var branding = Path.Combine(d, "branding"); Directory.CreateDirectory(branding);
+    File.WriteAllText(Path.Combine(branding, "about-logo.svg"), "<svg>BLAZE LOGO</svg>");
+    File.WriteAllBytes(Path.Combine(branding, "icon16.png"), new byte[] { 0x89, 0x50, 0x4E, 0x47, 1, 2, 3 });
 
-    Check(Rebrand.Apply(d, "Blaze", ".x{--a:#ff6a1a}", assets) == RebrandResult.Rebranded, "first apply should rebrand");
+    Check(Rebrand.Apply(d, "Blaze", ".x{--a:#ff6a1a}", assets, branding) == RebrandResult.Rebranded, "first apply should rebrand");
     string Read(string jar, string entry) { using var z = System.IO.Compression.ZipFile.OpenRead(Path.Combine(d, jar)); using var r = new StreamReader(z.GetEntry(entry)!.Open()); return r.ReadToEnd(); }
 
     var en = Read("browser/omni.ja", "localization/en-US/branding/brand.ftl");
@@ -345,14 +353,22 @@ await Test("22. rebrand: names, error CSS and artwork replaced; trademark line k
     Check(Read("browser/omni.ja", "chrome/en-US/locale/branding/brand.properties").Contains("brandShortName=Blaze"), "properties not replaced");
     Check(Read("browser/omni.ja", "chrome/toolkit/skin/classic/global/illustrations/kit-concerned.svg") == "<svg>BLAZE</svg>", "mascot artwork not replaced (browser jar)");
     Check(Read("browser/omni.ja", "modules/untouched.sys.mjs") == "export const x = 1;", "an unrelated file changed");
+    Check(Read("browser/omni.ja", "chrome/browser/content/branding/about-logo.svg") == "<svg>BLAZE LOGO</svg>", "product logo (about-logo.svg) not replaced");
+    Check(Read("browser/omni.ja", "chrome/browser/content/branding/icon16.png").StartsWith("\u0089PNG") || Read("browser/omni.ja", "chrome/browser/content/branding/icon16.png") != "FIREFOX PNG", "product icon (png) not replaced");
+    Check(Read("browser/omni.ja", "chrome/browser/content/branding/untouched-other.png") == "KEEP PNG", "an image we have no replacement for was touched");
+    var dlg = Read("browser/omni.ja", "localization/en-US/browser/aboutDialog.ftl");
+    Check(dlg.Contains("community-2 = Firefox is designed by") && !dlg.Contains("Blaze is designed by"), "About dialog still says the product is designed by Mozilla: " + dlg);
+    Check(dlg.Contains("community-exp = <label>{ -vendor-short-name }</label> is a global community.") && dlg.Contains("helpus = Want to help?"), "other About messages must stay untouched");
+    var dlgEs = Read("browser/omni.ja", "localization/es-ES/browser/aboutDialog.ftl");
+    Check(dlgEs.Contains("Firefox está diseñado por") && dlgEs.Contains("other = { -brand-short-name } stays."), "locale handling wrong: " + dlgEs);
     var css = Read("omni.ja", "chrome/toolkit/skin/classic/global/aboutNetError.css");
     Check(css.StartsWith("body{color:red}") && css.Contains("--a:#ff6a1a"), "error CSS not appended");
     Check(Read("omni.ja", "chrome/toolkit/skin/classic/global/illustrations/no-connection.svg") == "<svg>BLAZE</svg>", "artwork not replaced (toolkit jar)");
     Check(Read("omni.ja", "chrome/toolkit/skin/classic/global/illustrations/other.svg") == "<svg>KEEP</svg>", "an illustration we have no replacement for was touched");
     var head = new byte[2]; using (var fs = File.OpenRead(Path.Combine(d, "omni.ja"))) fs.ReadExactly(head);
     Check(head[0] == (byte)'P' && head[1] == (byte)'K', "result is not a clean zip starting at byte 0");
-    Check(Rebrand.Apply(d, "Blaze", ".x{--a:#ff6a1a}", assets) == RebrandResult.Unchanged, "second apply must be a no-op");
-    Check(Rebrand.Apply(d, "Blaze", ".x{--a:#000}", assets) == RebrandResult.Rebranded, "changed CSS must be applied again");
+    Check(Rebrand.Apply(d, "Blaze", ".x{--a:#ff6a1a}", assets, branding) == RebrandResult.Unchanged, "second apply must be a no-op");
+    Check(Rebrand.Apply(d, "Blaze", ".x{--a:#000}", assets, branding) == RebrandResult.Rebranded, "changed CSS must be applied again");
     var css2 = Read("omni.ja", "chrome/toolkit/skin/classic/global/aboutNetError.css");
     Check(css2.Split("/* ---- Blaze ---- */").Length == 2 && css2.Contains("#000") && !css2.Contains("#ff6a1a") && css2.StartsWith("body{color:red}"), "re-applying stacked a second Blaze block instead of replacing it: " + css2);
     try { Rebrand.Apply(Tmp(), "Blaze", null); throw new Exception("a non-Firefox folder was accepted"); } catch (FileNotFoundException) { }

@@ -38,7 +38,7 @@ Bytes through a counting proxy ([`tools/bench/countproxy.py`](../tools/bench/cou
 
 ## First start
 
-A new profile fetches about 43 MB in the background after the 87 MB engine download: Widevine 17.4 MB, Safe Browsing 10.4 MB, Mozilla Remote Settings 8.4 MB, uBlock Origin and Privacy Badger lists about 5.5 MB. See [PRIVACY.md](../PRIVACY.md). A start after that is near-silent.
+A new profile on Firefox 160.0.1 fetched about 49 MB in the background in 70 s (Mozilla's data and blocklists about 26 MB, Widevine 17 MB, Safe Browsing 6.5 MB), after the 87 MB engine download and about 38 MB of extensions (Bitwarden alone is 28 MB). On the earlier Firefox 159.0 the background figure was about 43 MB. One run each. See [PRIVACY.md](../PRIVACY.md). A start after that is near-silent.
 
 ## Downloader
 

@@ -29,10 +29,13 @@ public static class Rebrand
     private static readonly Regex FtlPath = new(@"^localization/[^/]+/branding/brand\.ftl$", RegexOptions.Compiled);
     private static readonly Regex PropsPath = new(@"^chrome/[^/]+/locale/branding/brand\.properties$", RegexOptions.Compiled);
     private static readonly Regex DtdPath = new(@"^chrome/[^/]+/locale/branding/brand\.dtd$", RegexOptions.Compiled);
+    private static readonly Regex AboutDialogPath = new(@"^localization/[^/]+/browser/aboutDialog\.ftl$", RegexOptions.Compiled);
+    /// <summary>Bump whenever the patching LOGIC changes: the "already applied" marker must not hide a fix from an engine patched earlier.</summary>
+    private const int LogicVersion = 3;
     private const string CssMark = "/* ---- Blaze ---- */";
     private const string ErrorCssEntry = "chrome/toolkit/skin/classic/global/aboutNetError.css";
 
-    public static RebrandResult Apply(string firefoxDir, string name, string? errorCss, string? assetsDir = null)
+    public static RebrandResult Apply(string firefoxDir, string name, string? errorCss, params string?[] assetDirs)
     {
         var marker = Path.Combine(firefoxDir, "distribution", "blaze-rebrand");
         var browserJar = Path.Combine(firefoxDir, "browser", "omni.ja");
@@ -40,7 +43,7 @@ public static class Rebrand
         foreach (var j in new[] { browserJar, toolkitJar })
             if (!File.Exists(j)) throw new FileNotFoundException("Not a Firefox directory (missing " + j + ")");
 
-        var assets = LoadAssets(assetsDir);
+        var assets = LoadAssets(assetDirs);
         var inputs = InputsHash(name, errorCss, assets);
 
         // The marker holds the hash of our inputs AND the sizes of the jars we produced, so a reinstalled engine
@@ -48,14 +51,16 @@ public static class Rebrand
         if (File.Exists(marker) && File.ReadAllText(marker).Trim() == inputs + " " + Sizes(browserJar, toolkitJar))
             return RebrandResult.Unchanged;
 
-        bool IsBrand(string e) => FtlPath.IsMatch(e) || PropsPath.IsMatch(e) || DtdPath.IsMatch(e);
-        bool IsAsset(string e) => assets.ContainsKey(Path.GetFileName(e)) && (e.Contains("/illustrations/") || e.Contains("cpm-fox"));
+        bool IsBrand(string e) => FtlPath.IsMatch(e) || PropsPath.IsMatch(e) || DtdPath.IsMatch(e) || AboutDialogPath.IsMatch(e);
+        // artwork we replace by file name: error-page illustrations, the Kit mascot, and the product logos / wordmarks / icons
+        bool IsAsset(string e) => assets.ContainsKey(Path.GetFileName(e)) && (e.Contains("/illustrations/") || e.Contains("cpm-fox") || e.Contains("/content/branding/"));
 
         RewriteJar(browserJar, e => IsBrand(e) || IsAsset(e), (e, data) =>
         {
             if (IsAsset(e)) return assets[Path.GetFileName(e)];
             var text = Utf8(data);
             if (FtlPath.IsMatch(e)) return Bytes(PatchFtl(text, name));
+            if (AboutDialogPath.IsMatch(e)) return Bytes(FixAttribution(text));
             if (PropsPath.IsMatch(e)) return Bytes(BrandProps.Replace(text.Replace("\r\n", "\n"), m => $"{m.Groups[1].Value}={name}"));
             return Bytes(BrandDtd.Replace(text, m => $"{m.Groups[1].Value}\"{name}\""));
         });
@@ -66,6 +71,24 @@ public static class Rebrand
         Directory.CreateDirectory(Path.GetDirectoryName(marker)!);
         File.WriteAllText(marker, inputs + " " + Sizes(browserJar, toolkitJar));
         return RebrandResult.Rebranded;
+    }
+
+    /// <summary>
+    /// The About dialog says "{ -brand-short-name } is designed by Mozilla, a global community...". With the brand renamed that
+    /// would claim Mozilla designed Blaze. Name Firefox there instead: Blaze is built on it, and Mozilla does design that.
+    /// Works for every locale because it only swaps the placeholder inside the "community-2" message.
+    /// </summary>
+    public static string FixAttribution(string ftl)
+    {
+        var lines = ftl.Replace("\r\n", "\n").Split('\n');
+        bool inMessage = false;
+        for (int i = 0; i < lines.Length; i++)
+        {
+            if (lines[i].StartsWith("community-2", StringComparison.Ordinal)) inMessage = true;
+            else if (inMessage && (lines[i].Length == 0 || !char.IsWhiteSpace(lines[i][0]))) inMessage = false;
+            if (inMessage) lines[i] = lines[i].Replace("{ -brand-short-name }", "Firefox");
+        }
+        return string.Join("\n", lines);
     }
 
     /// <summary>Replace the value of the -brand-* terms; keep attributes (e.g. grammatical gender) and every other line.</summary>
@@ -95,18 +118,22 @@ public static class Rebrand
         return i < 0 ? css : css[..i].TrimEnd('\n', '\r', ' ');
     }
 
-    private static Dictionary<string, byte[]> LoadAssets(string? dir)
+    private static Dictionary<string, byte[]> LoadAssets(string?[] dirs)
     {
         var d = new Dictionary<string, byte[]>(StringComparer.Ordinal);
-        if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir)) return d;
-        foreach (var f in Directory.GetFiles(dir, "*.svg")) d[Path.GetFileName(f)] = File.ReadAllBytes(f);
+        foreach (var dir in dirs)
+        {
+            if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir)) continue;
+            foreach (var f in Directory.GetFiles(dir).Where(f => f.EndsWith(".svg") || f.EndsWith(".png")))
+                d[Path.GetFileName(f)] = File.ReadAllBytes(f);
+        }
         return d;
     }
 
     private static string InputsHash(string name, string? css, Dictionary<string, byte[]> assets)
     {
         using var h = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
-        h.AppendData(Encoding.UTF8.GetBytes(name + "\n" + (css ?? "") + "\n"));
+        h.AppendData(Encoding.UTF8.GetBytes($"v{LogicVersion}\n{name}\n{css ?? ""}\n"));
         foreach (var kv in assets.OrderBy(k => k.Key, StringComparer.Ordinal)) { h.AppendData(Encoding.UTF8.GetBytes(kv.Key)); h.AppendData(kv.Value); }
         return Convert.ToHexString(h.GetHashAndReset());
     }
