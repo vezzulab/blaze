@@ -72,6 +72,7 @@ Una página liviana en una línea rápida puede tardar minutos en una mala. Blaz
 | **Valores por defecto que puedes cambiar** | DuckDuckGo como página de inicio y buscador, una barra corta (atrás, recargar, inicio, barra de direcciones, menú de extensiones, biblioteca, Lite), las pestañas a la derecha y los botones de ventana como grupo aparte. Se aplican una vez; lo que cambies en Ajustes se conserva. |
 | **DRM** | Widevine está activado, así que Spotify y Netflix funcionan. Un ajuste lo apaga. |
 | **Privado por defecto** | Sin telemetría, sin cuentas, solo HTTPS, protección estricta contra rastreo, sin notificaciones push web, sin consulta de región. Cada servidor con el que Blaze se conecta está en [PRIVACY.md](PRIVACY.md). |
+| **Pestañas dormidas** | Las pestañas web que llevas 10 minutos sin usar se descargan y se recargan al hacer clic, lo que libera la memoria de su página. No toca la pestaña activa, las fijadas ni las que suenan. Interruptor en el panel de Lite. Con seis páginas reales abiertas, dormir las cinco inactivas bajó la memoria de 1298 a 1121 MB (una corrida). |
 | **A prueba de actualizaciones** | Blaze fija un Firefox concreto (verificado por checksum) y apaga el actualizador de Firefox, así que una actualización de origen no puede romper la interfaz. Una prueba de contrato de la interfaz vigila cada cambio de motor. |
 | **Actualizaciones que decides tú** | Consulta GitHub una vez al día, muestra las notas de la versión y descarga solo si dices que sí. Las versiones se firman con ECDSA; Blaze rechaza lo que no se verifique. |
 | **Dos temas** | **Ember** (oscuro) y **Ash** (claro), según tu sistema. Planos, compactos, sin desenfoques ni sombras, con el naranja como único acento. |
@@ -94,12 +95,12 @@ Una página liviana en una línea rápida puede tardar minutos en una mala. Blaz
 **AppImage (Linux x86_64)**
 
 ```bash
-# 1. descarga Blaze-0.1.3-x86_64.AppImage (y SHA256SUMS y SHA256SUMS.sig para verificarlo) desde la página de Releases
+# 1. descarga Blaze-0.1.4-x86_64.AppImage (y SHA256SUMS y SHA256SUMS.sig para verificarlo) desde la página de Releases
 chmod +x Blaze-*-x86_64.AppImage
 ./Blaze-*-x86_64.AppImage
 ```
 
-La versión actual, **0.1.3** (software en alfa), publicada en la [página de Releases](https://github.com/vezzulab/blaze/releases) con su firma. **No uses la 0.1.0**: trae un Firefox desactualizado. ¿Prefieres compilarlo tú? Mira abajo. El primer arranque descarga Firefox 160.0.1 desde archive.mozilla.org (87 MB), lo verifica contra el SHA-256 fijado en [`engine.env`](engine.env) e instala las cuatro extensiones (unos 38 MB, de los que Bitwarden son 28). Si lo interrumpes, se reanuda. Después Firefox baja unos 49 MB en segundo plano (medido con Firefox 160.0.1: datos y listas de Mozilla 26, Widevine 17, Safe Browsing 6,5). En total unos 175 MB la primera vez; luego un arranque es casi silencioso. Con una conexión lenta, deja el primer arranque terminando.
+La versión actual, **0.1.4** (software en alfa), publicada en la [página de Releases](https://github.com/vezzulab/blaze/releases) con su firma. **No uses la 0.1.0**: trae un Firefox desactualizado. ¿Prefieres compilarlo tú? Mira abajo. El primer arranque descarga Firefox 160.0.1 desde archive.mozilla.org (87 MB), lo verifica contra el SHA-256 fijado en [`engine.env`](engine.env) e instala las cuatro extensiones (unos 38 MB, de los que Bitwarden son 28). Si lo interrumpes, se reanuda. Después Firefox baja unos 49 MB en segundo plano (medido con Firefox 160.0.1: datos y listas de Mozilla 26, Widevine 17, Safe Browsing 6,5). En total unos 175 MB la primera vez; luego un arranque es casi silencioso. Con una conexión lenta, deja el primer arranque terminando.
 
 **Desde el código** (necesita el SDK de .NET 10 con soporte AOT, `python3`, `curl`, `tar`, `xz`)
 

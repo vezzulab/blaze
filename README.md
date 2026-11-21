@@ -72,6 +72,7 @@ A page that is light on a fast line can take minutes on a bad one. Blaze attacks
 | **Defaults that are yours to change** | DuckDuckGo as homepage and search engine, a short toolbar (back, reload, home, address bar, extensions menu, library, Lite), the tab strip on the right, and the window buttons as their own group. Applied once; changing them in Settings sticks. |
 | **DRM** | Widevine is on, so Spotify and Netflix work. One setting turns it off. |
 | **Private by default** | No telemetry, no accounts, HTTPS-only, strict tracking protection, no web push, no region lookup. Every server Blaze contacts is listed in [PRIVACY.md](PRIVACY.md). |
+| **Sleeping tabs** | Web tabs you have not used for 10 minutes are unloaded and reload when you click them, which frees the memory of their page. Skips the active tab, pinned tabs and tabs playing sound. Switch in the Lite panel. With six real pages open, sleeping the five idle ones took memory from 1298 to 1121 MB (one run). |
 | **Update-proof** | Blaze pins a specific Firefox (checksum-verified) and switches off Firefox's own updater, so an upstream update cannot break the interface. A UI contract test guards every engine bump. |
 | **Updates you decide** | Checks GitHub once a day, shows the release notes, downloads only when you say yes. Releases are signed with ECDSA; Blaze rejects anything that does not verify. |
 | **Two themes** | **Ember** (dark) and **Ash** (light), following your system. Flat, compact, no blur or shadows, orange as the single accent. |
@@ -94,12 +95,12 @@ A page that is light on a fast line can take minutes on a bad one. Blaze attacks
 **AppImage (Linux x86_64)**
 
 ```bash
-# 1. download Blaze-0.1.3-x86_64.AppImage (plus SHA256SUMS and SHA256SUMS.sig to verify it) from the Releases page
+# 1. download Blaze-0.1.4-x86_64.AppImage (plus SHA256SUMS and SHA256SUMS.sig to verify it) from the Releases page
 chmod +x Blaze-*-x86_64.AppImage
 ./Blaze-*-x86_64.AppImage
 ```
 
-The current release, **0.1.3** (alpha software), published on the [Releases page](https://github.com/vezzulab/blaze/releases) with its signature. **Do not use 0.1.0**: it ships an out-of-date Firefox. Prefer to build it yourself? See below. The first start downloads Firefox 160.0.1 from archive.mozilla.org (87 MB), verifies it against the SHA-256 pinned in [`engine.env`](engine.env), and installs the four extensions (about 38 MB, of which Bitwarden is 28). Interrupt it and it resumes. Firefox then fetches about 49 MB in the background (measured on Firefox 160.0.1: Mozilla's blocklists and data 26, Widevine 17, Safe Browsing 6.5). Altogether about 175 MB the first time, then a start is nearly silent. On a slow link, leave the first start running.
+The current release, **0.1.4** (alpha software), published on the [Releases page](https://github.com/vezzulab/blaze/releases) with its signature. **Do not use 0.1.0**: it ships an out-of-date Firefox. Prefer to build it yourself? See below. The first start downloads Firefox 160.0.1 from archive.mozilla.org (87 MB), verifies it against the SHA-256 pinned in [`engine.env`](engine.env), and installs the four extensions (about 38 MB, of which Bitwarden is 28). Interrupt it and it resumes. Firefox then fetches about 49 MB in the background (measured on Firefox 160.0.1: Mozilla's blocklists and data 26, Widevine 17, Safe Browsing 6.5). Altogether about 175 MB the first time, then a start is nearly silent. On a slow link, leave the first start running.
 
 **From source** (needs the .NET 10 SDK with AOT support, `python3`, `curl`, `tar`, `xz`)
 
