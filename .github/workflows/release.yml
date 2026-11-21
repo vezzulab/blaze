@@ -38,6 +38,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           args=(--title "Blaze ${GITHUB_REF_NAME#v}")
-          case "${GITHUB_REF_NAME}" in v0.*) args+=(--prerelease);; esac
+          args+=(--latest)   # a normal release, shown under Releases and as "Latest" (not a pre-release)
           if [ -f RELEASE_NOTES.md ]; then args+=(--notes-file RELEASE_NOTES.md); else args+=(--generate-notes); fi
           gh release create "${GITHUB_REF_NAME}" dist/Blaze-*-x86_64.AppImage dist/SHA256SUMS dist/SHA256SUMS.sig "${args[@]}"

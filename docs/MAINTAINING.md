@@ -27,9 +27,9 @@ Never ship an engine version whose contract fails.
 3. `packaging/build-appimage.sh`.
 4. Sign: `BLAZE_SIGNING_KEY=/path/to/release-key.pem tools/sign-release.sh dist/Blaze-<version>-x86_64.AppImage`. This writes `SHA256SUMS` and `SHA256SUMS.sig`.
 5. Publish a GitHub release with those three files. The AppImage must be named `Blaze-<version>-x86_64.AppImage`, or the updater will not see it. Write release notes for users: the updater shows them verbatim (first 14 lines) before anyone decides. Say if the release changes the Firefox version (it triggers an 86 MB download on first run).
-6. Mark releases below 1.0 as pre-releases.
+6. Publish a normal release marked **Latest** (not a pre-release): GitHub only lists those under "Releases" and in the `releases/latest` link. The alpha status is stated in the title and the notes instead.
 
-The tag workflow (`.github/workflows/release.yml`) does steps 2 to 5 from a `v*` tag, with the private key in the `BLAZE_SIGNING_KEY` secret. It has not run yet.
+The tag workflow (`.github/workflows/release.yml`) does steps 2 to 5 from a `v*` tag, with the private key in the `BLAZE_SIGNING_KEY` secret; it publishes a normal "Latest" release. It has not run yet.
 
 ## The signing key
 
