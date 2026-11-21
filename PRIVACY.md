@@ -12,7 +12,7 @@ We ran Blaze's pinned Firefox 159 (headless, Linux) through a counting proxy ([`
 
 | Host | When | What for |
 |---|---|---|
-| `archive.mozilla.org` | First start, and when a Blaze release pins a new Firefox | Downloads the Firefox engine (86 MB). Verified against a checksum pinned in this repository. |
+| `archive.mozilla.org` | First start, and when a Blaze release pins a new Firefox | Downloads the Firefox engine (87 MB). Verified against a checksum pinned in this repository. |
 | `addons.mozilla.org` | First start | Downloads uBlock Origin and Privacy Badger (Mozilla-signed). |
 | `api.github.com`, `github.com` | Once a day, and on `blaze --update` | Looks for a new Blaze release. Sends your IP address and the User-Agent `Blaze-Updater`; no identifier, no version of your system. Turn it off with `BLAZE_NO_UPDATE_CHECK=1`. |
 

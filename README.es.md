@@ -98,7 +98,7 @@ chmod +x Blaze-*-x86_64.AppImage
 ./Blaze-*-x86_64.AppImage
 ```
 
-La primera versión, **0.1.0, es una prerelease** (alfa), publicada en la [página de Releases](https://github.com/vezzulab/blaze/releases) con su firma. ¿Prefieres compilarlo tú? Mira abajo. El primer arranque descarga Firefox 159 desde archive.mozilla.org (86 MB), lo verifica contra el SHA-256 fijado en [`engine.env`](engine.env) e instala uBlock Origin y Privacy Badger. Si lo interrumpes, se reanuda. Después Firefox baja unos 43 MB en segundo plano (Widevine 17, Safe Browsing 10, listas de bloqueo de Mozilla 8, listas de uBlock/Privacy Badger 5). Luego un arranque es casi silencioso.
+La primera versión, **0.1.0, es una prerelease** (alfa), publicada en la [página de Releases](https://github.com/vezzulab/blaze/releases) con su firma. ¿Prefieres compilarlo tú? Mira abajo. El primer arranque descarga Firefox 160.0.1 desde archive.mozilla.org (87 MB), lo verifica contra el SHA-256 fijado en [`engine.env`](engine.env) e instala uBlock Origin y Privacy Badger. Si lo interrumpes, se reanuda. Después Firefox baja unos 43 MB en segundo plano (Widevine 17, Safe Browsing 10, listas de bloqueo de Mozilla 8, listas de uBlock/Privacy Badger 5). Luego un arranque es casi silencioso.
 
 **Desde el código** (necesita el SDK de .NET 10 con soporte AOT, `python3`, `curl`, `tar`, `xz`)
 
@@ -151,7 +151,7 @@ flowchart LR
 | AppImage | Se construye y arranca con y sin FUSE |
 | Interruptores de DRM, Safe Browsing y actualizaciones | Funciona |
 | Marca Blaze: nombre, menús, páginas de error y sus ilustraciones | Funciona. El motor arranca igual de rápido que el original (0,4 s en estar listo, ambos). Cubierto por 1 prueba unitaria y el contrato de la interfaz. |
-| Tira de pestañas verticales a la derecha con el Firefox fijado | **No aparece en nuestras pruebas sin ventana** (sí con el Firefox de Fedora 159). Causa sin encontrar. Ver [Límites conocidos](#límites-conocidos). |
+| Tira de pestañas verticales a la derecha | Funciona con Firefox 160.0.1 (confirmado con captura). **Faltaba en la compilación 159.0** que se distribuyó en la 0.1.0. |
 | Motor de descargas dentro del botón de descargas del navegador | Planeado |
 | Excepciones de Lite por sitio | Planeado |
 | Página de nueva pestaña y panel de descargas propios | Planeado |
@@ -163,7 +163,7 @@ flowchart LR
 - El motor de descargas todavía no está conectado al botón de descargas de Firefox. Hoy descarga los componentes de Blaze (el motor, las extensiones, las actualizaciones) y se maneja desde una terminal: `blaze-agent get <url> --dir <carpeta>`.
 - Firefox de versión final solo acepta extensiones firmadas por Mozilla. Por eso Blaze carga su extensión Lite como complemento temporal en cada arranque, por un socket Unix privado que se cierra enseguida. Funciona, pero no es una instalación permanente.
 - Fijar Firefox significa que las correcciones de seguridad de Firefox te llegan **a través de las versiones de Blaze**, no por sí solas. Seguir el ritmo de versiones de Firefox es una regla de mantenimiento del proyecto ([docs/MAINTAINING.md](docs/MAINTAINING.md)), y el aviso de actualización es la forma de recibir esas correcciones.
-- **La tira de pestañas verticales a la derecha no aparece** en nuestra prueba automática de primer arranque con el Firefox que Blaze fija, aunque sí con el Firefox que viene en Fedora. Confirmamos que no la causan las políticas ni el cambio de marca de Blaze. Todavía no hemos comprobado si una ventana normal (no sin ventana) la muestra, así que considéralo sin resolver. `python3 tools/ui.py contract` lo reporta.
+- **Blaze 0.1.0 distribuyó un Firefox desactualizado (159.0)** al que le faltan las correcciones de más de 100 CVE publicados desde entonces, incluidos escapes del sandbox. La versión 0.1.1 fija Firefox 160.0.1. Si instalaste la 0.1.0, actualiza y evita inicios de sesión sensibles hasta hacerlo. Es el costo de fijar el motor; ver [SECURITY.md](SECURITY.md).
 - Privacy Badger abre su propia pestaña de bienvenida la primera vez que se instala.
 - El cambio de marca reescribe dos de los archivos de recursos del motor en tu máquina al instalarlo, como zips limpios. Firefox no se recompila.
 - Solo Linux x86_64. Los flujos de CI están escritos pero todavía no se han ejecutado.

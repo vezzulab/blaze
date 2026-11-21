@@ -4,7 +4,7 @@ What we measured, how, and where the numbers stop being trustworthy. We only com
 
 ## Setup
 
-- Machine: Fedora 44, 15 GB RAM. Engine: official Firefox 159.0.
+- Machine: Fedora 44, 15 GB RAM. Engine: official Firefox 159.0 (the version pinned by Blaze 0.1.0; 0.1.1 pins 160.0.1 and the figures were not re-measured).
 - "Firefox as shipped": a brand-new, empty profile. "Blaze": the same engine with the Blaze profile ([`profile/user.js`](../profile/user.js)). "Lite": Blaze with images, fonts and media blocked.
 - Firefox ran **headless**, so the window, compositor and GPU process are not counted. Real desktop use is somewhat heavier for both.
 - **One run per cell.** No averages, no confidence intervals.
@@ -38,7 +38,7 @@ Bytes through a counting proxy ([`tools/bench/countproxy.py`](../tools/bench/cou
 
 ## First start
 
-A new profile fetches about 43 MB in the background after the 86 MB engine download: Widevine 17.4 MB, Safe Browsing 10.4 MB, Mozilla Remote Settings 8.4 MB, uBlock Origin and Privacy Badger lists about 5.5 MB. See [PRIVACY.md](../PRIVACY.md). A start after that is near-silent.
+A new profile fetches about 43 MB in the background after the 87 MB engine download: Widevine 17.4 MB, Safe Browsing 10.4 MB, Mozilla Remote Settings 8.4 MB, uBlock Origin and Privacy Badger lists about 5.5 MB. See [PRIVACY.md](../PRIVACY.md). A start after that is near-silent.
 
 ## Downloader
 

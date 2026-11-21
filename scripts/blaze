@@ -29,6 +29,7 @@ say()  { printf 'blaze: %s\n' "$*" >&2; }
 die()  { printf 'blaze: error: %s\n' "$*" >&2; notify -u critical "Blaze could not start" "$*"; exit 1; }
 [ -x "$AGENT" ] || die "agent not found at $AGENT (build it: dotnet publish src/Blaze.Agent -c Release -r linux-x64 -o dist/agent)"
 mkdir -p "$DATA"
+chmod 700 "$DATA" 2>/dev/null || true        # cookies, logins and history live below: nobody else on the machine may read them
 
 # One Blaze at a time. A second start (people click again when nothing seems to happen) would download the same
 # engine into the same files, or fight over the profile lock. The lock lives as long as Blaze does.
@@ -65,7 +66,7 @@ install_engine() {
   mkdir -p "$ENGINE_ROOT/dl"
   local pf="$ENGINE_ROOT/dl/progress" nid=""
   rm -f "$pf"
-  nid="$(notify -p -t 0 -h int:value:0 "Blaze is getting ready" "First start: downloading Firefox (86 MB). You can leave this running or close it; it resumes where it stopped." )"
+  nid="$(notify -p -t 0 -h int:value:0 "Blaze is getting ready" "First start: downloading Firefox (87 MB). You can leave this running or close it; it resumes where it stopped." )"
   "$AGENT" get "https://archive.mozilla.org/pub/firefox/releases/$v/linux-x86_64/$locale/firefox-$v.tar.xz" \
       --dir "$ENGINE_ROOT/dl" --name "$tar" --connections 4 --quiet --progress-file "$pf" >/dev/null &
   local apid=$! last=-1 pct got total
@@ -142,6 +143,8 @@ fi
 
 # ---------------------------------------------------------------- 2. profile
 mkdir -p "$PROFILE/chrome" "$PROFILE/extensions"
+# Profiles made by older builds (or under a looser umask) had world-readable files, e.g. cookies.sqlite. Fix them on every start.
+chmod -R go-rwx "$PROFILE" 2>/dev/null || true
 running() { pgrep -f -- "-profile $PROFILE" >/dev/null 2>&1; }
 
 # One-time layout init: a profile FIRST started with vertical tabs gets a toolbar without Reload/Downloads (Firefox 159).

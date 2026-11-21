@@ -98,7 +98,7 @@ chmod +x Blaze-*-x86_64.AppImage
 ./Blaze-*-x86_64.AppImage
 ```
 
-The first release, **0.1.0, is a pre-release** (alpha), published on the [Releases page](https://github.com/vezzulab/blaze/releases) with its signature. Prefer to build it yourself? See below. The first start downloads Firefox 159 from archive.mozilla.org (86 MB), verifies it against the SHA-256 pinned in [`engine.env`](engine.env), and installs uBlock Origin and Privacy Badger. Interrupt it and it resumes. Firefox then fetches about 43 MB in the background (Widevine 17, Safe Browsing 10, Mozilla blocklists 8, uBlock/Privacy Badger lists 5). Afterwards a start is nearly silent.
+The first release, **0.1.0, is a pre-release** (alpha), published on the [Releases page](https://github.com/vezzulab/blaze/releases) with its signature. Prefer to build it yourself? See below. The first start downloads Firefox 160.0.1 from archive.mozilla.org (87 MB), verifies it against the SHA-256 pinned in [`engine.env`](engine.env), and installs uBlock Origin and Privacy Badger. Interrupt it and it resumes. Firefox then fetches about 43 MB in the background (Widevine 17, Safe Browsing 10, Mozilla blocklists 8, uBlock/Privacy Badger lists 5). Afterwards a start is nearly silent.
 
 **From source** (needs the .NET 10 SDK with AOT support, `python3`, `curl`, `tar`, `xz`)
 
@@ -151,7 +151,7 @@ flowchart LR
 | AppImage | Builds and starts with and without FUSE |
 | DRM, Safe Browsing and update switches | Working |
 | Blaze branding: name, menus, error pages and their artwork | Working. The engine starts as fast as the original (0.4 s to be ready, both). Covered by 1 unit test and the UI contract. |
-| Right-hand vertical tab strip on the pinned Firefox | **Not showing in our headless tests** (it does with Fedora's own Firefox 159). Cause not found yet. See [Known limits](#known-limits). |
+| Right-hand vertical tab strip | Working on Firefox 160.0.1 (confirmed by screenshot). It was **missing on the 159.0 build** we shipped in 0.1.0. |
 | Download engine inside the browser's download button | Planned |
 | Lite exceptions per site | Planned |
 | Own new-tab page and downloads panel | Planned |
@@ -163,7 +163,7 @@ flowchart LR
 - The download engine is not yet connected to Firefox's download button. Today it downloads Blaze's own components (the engine, the extensions, updates) and can be driven from a terminal: `blaze-agent get <url> --dir <folder>`.
 - Release Firefox only accepts Mozilla-signed add-ons. Blaze therefore loads its Lite extension as a temporary add-on on each start, over a private Unix socket that is closed right after. It works, but it is not a permanent install.
 - Pinning Firefox means Firefox's security fixes reach you **through Blaze releases**, not on their own. Following Firefox's release cadence is a maintenance rule of this project ([docs/MAINTAINING.md](docs/MAINTAINING.md)), and the update prompt is how you receive those fixes.
-- **The vertical tab strip on the right does not appear** in our automated first-start test with the Firefox that Blaze pins, although it does with the Firefox that ships in Fedora. We confirmed it is not caused by Blaze's policies or branding. We have not yet checked whether a normal window (not headless) shows it, so treat this as unresolved. `python3 tools/ui.py contract` reports it.
+- **Blaze 0.1.0 shipped an out-of-date Firefox (159.0)** that lacks fixes for more than 100 CVEs published since, including sandbox escapes. Version 0.1.1 pins Firefox 160.0.1. If you installed 0.1.0, update, and avoid sensitive logins until you do. This is the cost of pinning the engine; see [SECURITY.md](SECURITY.md).
 - Privacy Badger opens its own welcome tab the first time it is installed.
 - Rebranding rewrites two of the engine's resource archives on your machine at install time, as clean zip files. Firefox itself is not recompiled.
 - Linux x86_64 only. CI workflows are written but have not run yet.
