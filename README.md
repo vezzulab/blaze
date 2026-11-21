@@ -24,22 +24,23 @@
 </p>
 
 <p align="center">
-  <img src="docs/assets/blaze-ember.png" alt="Blaze, dark theme (Ember)" width="860">
+  <img src="docs/assets/blaze-ember.png" alt="Blaze, dark theme (Ember): rounded address bar, the Lite switch and extension icons at the top right" width="860">
 </p>
 
 ---
 
 ## What Blaze is
 
-Blaze is a **Firefox-based browser**: a distribution of the official Firefox engine (Gecko), tuned for people on slow or metered connections and for machines with little memory. It runs the real, unmodified Firefox, so the whole modern web works, including YouTube, Spotify and your extensions. On top of it Blaze adds:
+Blaze is a **Firefox-based browser**: a distribution of the official Firefox engine (Gecko), tuned for people on slow or metered connections and for machines with little memory. It runs the real Firefox, so the whole modern web works, including YouTube, Spotify and your extensions. On top of it Blaze adds:
 
 - a tuned profile (fewer processes, small memory caches, a big persistent disk cache, no background chatter),
 - a one-click **Lite mode**,
 - a **resumable download engine**,
 - a minimal interface with two themes,
-- a launcher that pins a tested Firefox and a signed updater that tells you what changed before you decide.
+- a launcher that pins a tested Firefox and a signed updater that tells you what changed before you decide,
+- Blaze branding in place of Firefox's: the name in menus and dialogs, and error pages with Blaze artwork instead of Firefox's fox mascot.
 
-Blaze is **not** a source-level fork and does not patch Gecko. Everything that is not Firefox lives in this repository and is small enough to read in an afternoon.
+Blaze is **not** a source-level fork and does not patch Gecko's code. On your machine it only swaps Firefox's name, a few strings and the error-page artwork for Blaze's (see [Known limits](#known-limits)). Everything that is not Firefox lives in this repository and is small enough to read in an afternoon.
 
 > **Alpha software.** It works end to end (see [Status](#status)), but it is young. Read the limits below before you rely on it.
 
@@ -73,12 +74,19 @@ A page that is light on a fast line can take minutes on a bad one. Blaze attacks
 | **Update-proof** | Blaze pins a specific Firefox (checksum-verified) and switches off Firefox's own updater, so an upstream update cannot break the interface. A UI contract test guards every engine bump. |
 | **Updates you decide** | Checks GitHub once a day, shows the release notes, downloads only when you say yes. Releases are signed with ECDSA; Blaze rejects anything that does not verify. |
 | **Two themes** | **Ember** (dark) and **Ash** (light), following your system. Flat, compact, no blur or shadows, orange as the single accent. |
-| **Small** | The Blaze app is a 4.5 MB AppImage. Its agent is a native AOT binary (about 10 MB of RAM while downloading). |
+| **Looks like Blaze** | Menus, dialogs and error pages say Blaze and use Blaze artwork, not Firefox's mascot. See below. |
+| **Small** | The Blaze app is an AppImage under 5 MB. Its agent is a native AOT binary (about 10 MB of RAM while downloading). |
 
 <p align="center">
-  <img src="docs/assets/blaze-ash.png" alt="Blaze, light theme (Ash)" width="860">
+  <img src="docs/assets/blaze-ash.png" alt="Blaze, light theme (Ash): the same toolbar on a light background" width="860">
 </p>
 <p align="center"><sub>Captured from a real Blaze window. Only the interface is shown; the page area is empty because of how the screenshots are taken.</sub></p>
+
+### Errors look like Blaze too
+
+<p align="center">
+  <img src="docs/assets/blaze-error-ember.png" alt="A Blaze error page: 'Blaze can't connect to the server', a flame with an unplugged cable, and an orange Try Again button" width="640">
+</p>
 
 ## Install
 
@@ -137,12 +145,13 @@ flowchart LR
 | Area | State |
 |---|---|
 | Tuned Firefox profile, Lite mode, themes | Working |
-| Download engine | Working, 21 automated tests. Runs from the command line. |
+| Download engine | Working, covered by the 22-test suite. Runs from the command line. |
 | Pinned engine + update-proofing + UI contract test | Working |
 | Signed updater with release notes | Working, tested against a simulated GitHub (including forged and unsigned releases) |
 | AppImage | Builds and starts with and without FUSE |
 | DRM, Safe Browsing and update switches | Working |
-| Blaze-branded error pages and menus | **Experimental**: the rebranding tool exists but is not switched on. We are measuring its effect on startup time first. |
+| Blaze branding: name, menus, error pages and their artwork | Working. The engine starts as fast as the original (0.4 s to be ready, both). Covered by 1 unit test and the UI contract. |
+| Right-hand vertical tab strip on the pinned Firefox | **Not showing in our headless tests** (it does with Fedora's own Firefox 159). Cause not found yet. See [Known limits](#known-limits). |
 | Download engine inside the browser's download button | Planned |
 | Lite exceptions per site | Planned |
 | Own new-tab page and downloads panel | Planned |
@@ -154,13 +163,16 @@ flowchart LR
 - The download engine is not yet connected to Firefox's download button. Today it downloads Blaze's own components (the engine, the extensions, updates) and can be driven from a terminal: `blaze-agent get <url> --dir <folder>`.
 - Release Firefox only accepts Mozilla-signed add-ons. Blaze therefore loads its Lite extension as a temporary add-on on each start, over a private Unix socket that is closed right after. It works, but it is not a permanent install.
 - Pinning Firefox means Firefox's security fixes reach you **through Blaze releases**, not on their own. Following Firefox's release cadence is a maintenance rule of this project ([docs/MAINTAINING.md](docs/MAINTAINING.md)), and the update prompt is how you receive those fixes.
+- **The vertical tab strip on the right does not appear** in our automated first-start test with the Firefox that Blaze pins, although it does with the Firefox that ships in Fedora. We confirmed it is not caused by Blaze's policies or branding. We have not yet checked whether a normal window (not headless) shows it, so treat this as unresolved. `python3 tools/ui.py contract` reports it.
+- Privacy Badger opens its own welcome tab the first time it is installed.
+- Rebranding rewrites two of the engine's resource archives on your machine at install time, as clean zip files. Firefox itself is not recompiled.
 - Linux x86_64 only. CI workflows are written but have not run yet.
 
 ## Development
 
 ```bash
 dotnet build
-(cd tests/Blaze.Tests && dotnet run -c Release)      # 21 tests: resume, outages, forged updates, rate limits...
+(cd tests/Blaze.Tests && dotnet run -c Release)      # 22 tests: resume, outages, forged updates, rate limits...
 python3 tools/ui.py contract                         # needs the engine: run scripts/blaze once first
 python3 tools/ui.py shot --scheme dark --out ember.png
 ```

@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Blaze.Agent/Blaze.Agent.csproj" />
+    <Project Path="src/Blaze.Core/Blaze.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Blaze.Tests/Blaze.Tests.csproj" />
+  </Folder>
+</Solution>

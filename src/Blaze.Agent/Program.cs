@@ -5,7 +5,7 @@ using Blaze.Core.Updates;
 // blaze-agent get <url> [--dir DIR] [--name FILE] [--connections N] [--limit KBps] [--state FILE]
 // blaze-agent addon-install (--socket PATH | --port N) --path DIR [--wait SECONDS]   (temporary add-on over Firefox's debugger channel)
 // blaze-agent list [--state FILE]
-// blaze-agent rebrand --dir FIREFOX_DIR [--name Blaze] [--css FILE]   -> REBRANDED | UNCHANGED   (engine presents itself as Blaze)
+// blaze-agent rebrand --dir FIREFOX_DIR [--name Blaze] [--css FILE] [--assets DIR_WITH_SVGS]   -> REBRANDED | UNCHANGED   (engine presents itself as Blaze)
 // blaze-agent update check [--force] [--pre]   -> UPDATE_AVAILABLE <v> | UP_TO_DATE | SKIPPED | NOT_DUE ; writes update/{version,notes.txt,url}
 // blaze-agent update apply --target PATH        -> download (resumable) + verify SHA-256 + atomic swap, previous kept as .old
 // blaze-agent update skip <version>             -> never offer that version again
@@ -45,7 +45,9 @@ if (args[0] == "rebrand")
     try
     {
         var css = Opt(args, "--css", "");
-        var r = Rebrand.Apply(Path.GetFullPath(Opt(args, "--dir", ".")), Opt(args, "--name", "Blaze"), css.Length > 0 ? File.ReadAllText(css) : null);
+        var assets = Opt(args, "--assets", "");
+        var r = Rebrand.Apply(Path.GetFullPath(Opt(args, "--dir", ".")), Opt(args, "--name", "Blaze"),
+            css.Length > 0 ? File.ReadAllText(css) : null, assets.Length > 0 ? Path.GetFullPath(assets) : null);
         Console.WriteLine(r == RebrandResult.Rebranded ? "REBRANDED" : "UNCHANGED");
         return 0;
     }

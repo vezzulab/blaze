@@ -39,7 +39,12 @@ class Marionette:
     def _recv(self):
         h = b""
         while not h.endswith(b":"): h += self.f.read(1)
-        return json.loads(self.f.read(int(h[:-1])))
+        n = int(h[:-1]); buf = b""
+        while len(buf) < n:                    # raw sockets may deliver a big message (a screenshot) in pieces
+            chunk = self.f.read(n - len(buf))
+            if not chunk: raise RuntimeError("Marionette closed the connection mid-message")
+            buf += chunk
+        return json.loads(buf)
 
     def cmd(self, name, params=None):
         self.n += 1; m = json.dumps([0, self.n, name, params or {}]).encode()
@@ -73,7 +78,29 @@ def launch(firefox, profile, extra_args=()):
 
 
 def make_profile(firefox, scheme):
-    """Two-phase init, exactly like scripts/blaze: stock layout first, vertical tabs afterwards."""
+    """Build the profile exactly like a user's first run: with scripts/blaze itself (stock layout first, then the
+    sidebar prefs), against a throw-away data dir that shares the already-installed engine. Falls back to a manual
+    two-phase init only when the engine is not a Blaze-managed one."""
+    marker = "/blaze/engine/"
+    agent = os.path.join(REPO, "dist", "agent", "blaze-agent")
+    if marker in firefox and os.path.exists(agent):
+        data_root = firefox.split(marker)[0]
+        eng_name = firefox.split(marker)[1].split("/")[0]              # e.g. 159.0-en-US
+        locale = eng_name.split("-", 1)[1]
+        tmp = tempfile.mkdtemp(prefix="blaze-ui-")
+        xdg = os.path.join(tmp, "xdg"); os.makedirs(os.path.join(xdg, "blaze", "profile", "extensions"))
+        os.symlink(os.path.join(data_root, "blaze", "engine"), os.path.join(xdg, "blaze", "engine"))
+        for x in glob.glob(os.path.join(data_root, "blaze", "profile", "extensions", "*.xpi")):
+            shutil.copy(x, os.path.join(xdg, "blaze", "profile", "extensions"))     # avoid re-downloading the add-ons
+        env = {**os.environ, "XDG_DATA_HOME": xdg, "BLAZE_BOOTSTRAP_ONLY": "1", "BLAZE_NO_UPDATE_CHECK": "1",
+               "BLAZE_LOCALE": locale, "BLAZE_AGENT": agent}
+        r = subprocess.run([os.path.join(REPO, "scripts", "blaze")], env=env, capture_output=True, text=True, timeout=240)
+        if r.returncode != 0: raise RuntimeError("scripts/blaze failed:\n" + r.stderr[-600:])
+        prof = os.path.join(xdg, "blaze", "profile")
+        with open(f"{prof}/user.js", "a") as f: f.write(f'\nuser_pref("ui.systemUsesDarkTheme", {1 if scheme == "dark" else 0});\n')
+        with open(f"{prof}/chrome/userChrome.css", "a") as f: f.write("\n#remote-control-box{display:none!important}\n")  # automation stripes
+        return prof
+
     prof = tempfile.mkdtemp(prefix="blaze-ui-")
     os.makedirs(f"{prof}/chrome")
     src = open(f"{REPO}/profile/user.js").read()
@@ -82,13 +109,14 @@ def make_profile(firefox, scheme):
     time.sleep(3); m.quit(); time.sleep(2); p.kill(); p.wait()
     open(f"{prof}/user.js", "w").write(src + f'\nuser_pref("ui.systemUsesDarkTheme", {1 if scheme == "dark" else 0});\n')
     for css in glob.glob(f"{REPO}/profile/chrome/*.css"): shutil.copy(css, f"{prof}/chrome/")
-    with open(f"{prof}/chrome/userChrome.css", "a") as f: f.write("\n#remote-control-box{display:none!important}\n")  # automation stripes
+    with open(f"{prof}/chrome/userChrome.css", "a") as f: f.write("\n#remote-control-box{display:none!important}\n")
     return prof
 
 
 PROBE = r"""
 const out={}; const q=(s)=>document.querySelector(s); const cs=(e)=>e?window.getComputedStyle(e):null;
 const t=(k,f)=>{try{out[k]=f()}catch(e){out[k]='ERR '+e.message}};
+t('brand',()=>Services.strings.createBundle('chrome://branding/locale/brand.properties').GetStringFromName('brandShortName'));
 t('back',()=>!!q('#back-button')&&cs(q('#back-button')).display!=='none');
 t('reload',()=>{const r=q('#reload-button');return !!r&&cs(r).display!=='none'});
 t('urlbarBgEl',()=>!!q('#urlbar > .urlbar-background'));
@@ -106,24 +134,50 @@ return out;
 """
 
 
+def sidebar_visible(png_bytes):
+    """True/False from the pixels of a screenshot; None when Pillow is missing. A prefs-only check once passed while
+    the strip was not drawn at all, so the contract looks at what is actually rendered."""
+    try:
+        import io
+        from PIL import Image
+    except ImportError:
+        return None
+    im = Image.open(io.BytesIO(png_bytes)).convert("RGB"); w, h = im.size
+    bg = im.getpixel((w - 100, h // 2)); n = 0          # page background just left of the strip
+    for x in range(w - 45, w - 5):
+        for y in range(60, 320):
+            if sum(abs(a - b) for a, b in zip(im.getpixel((x, y)), bg)) > 60: n += 1
+    return n > 150
+
+
 def check_scheme(firefox, scheme, shot=None):
     prof = make_profile(firefox, scheme)
     p, m = launch(firefox, prof)
     results = []
     try:
         m.cmd("WebDriver:SetWindowRect", {"width": 1280, "height": 760})
-        m.cmd("Marionette:SetContext", {"value": "content"})
-        for url in ("about:blank", "https://example.org"):   # last one stays selected: the lock icon only exists on https pages
-            m.cmd("WebDriver:NewWindow", {"type": "tab", "focus": True})
-            try: m.cmd("WebDriver:Navigate", {"url": url})
-            except Exception: pass
         m.cmd("Addon:Install", {"path": f"{REPO}/extension", "temporary": True})
-        time.sleep(6)   # let https://example.org finish so the trust icon is real
+        time.sleep(6)
+        m.cmd("Marionette:SetContext", {"value": "chrome"})
+        # Privacy Badger opens its welcome page in a second tab on a fresh profile. Keep only the first (blank) tab so the
+        # check below sees the single-tab state, and so the page behind the strip is a plain background.
+        m.script("for (const t of [...gBrowser.tabs].slice(1)) gBrowser.removeTab(t); return gBrowser.tabs.length;")
+        time.sleep(3)
+        # What a new user sees on first start (one tab). Opening extra tabs through Marionette hides the strip in
+        # this automated setup, so the screenshot is taken BEFORE any navigation.
+        early = base64.b64decode(m.cmd("WebDriver:TakeScreenshot", {"full": False, "hash": False})["value"])
+        if shot: open(shot, "wb").write(early)
+
+        m.cmd("Marionette:SetContext", {"value": "content"})
+        try: m.cmd("WebDriver:Navigate", {"url": "https://example.org"})      # the lock icon only exists on https pages
+        except Exception: pass
+        time.sleep(6)
         m.cmd("Marionette:SetContext", {"value": "chrome"})
         o = m.script(PROBE)
         tok = TOKENS[scheme]
 
         def ck(name, ok, detail=""): results.append((name, bool(ok), detail))
+        ck("engine presents itself as Blaze (brand name)", o["brand"] == "Blaze", f"brandShortName={o['brand']}; run scripts/blaze so the engine is rebranded")
         ck("back + reload buttons exist", o["back"] is True and o["reload"] is True, f"back={o['back']} reload={o['reload']}")
         ck("urlbar background element is .urlbar-background", o["urlbarBgEl"] is True)
         ub = o["urlbarBg"] if isinstance(o["urlbarBg"], dict) else {}
@@ -136,15 +190,15 @@ def check_scheme(firefox, scheme, shot=None):
         ck("active tab is Blaze orange", o["tabBg"] == ORANGE, f"{o['tabBg']}")
         sr = o["sidebarRight"] if isinstance(o["sidebarRight"], dict) else {}
         ck("sidebar defaults: right side, vertical tabs, expand-on-hover", sr.get("right") is True and sr.get("vertical") is True and sr.get("mode") == "expand-on-hover", str(sr))
+        vis = sidebar_visible(early)
+        if vis is not None: ck("sidebar strip is actually drawn on first start (screenshot)", vis, "no tab strip pixels at the right edge")
         ck("Firefox clutter hidden (VPN, AI, accounts)", o["clutter"] == [], str(o["clutter"]))
         pr = o["prefs"] if isinstance(o["prefs"], dict) else {}
         ck("Firefox self-update is off", pr.get("autoUpdate") is False)
         ck("HTTPS-only on, telemetry off, web push off", pr.get("httpsOnly") is True and pr.get("telemetry") is False and pr.get("push") is False, str(pr))
-        if shot:
-            r = m.cmd("WebDriver:TakeScreenshot", {"full": False, "hash": False})
-            open(shot, "wb").write(base64.b64decode(r["value"]))
     finally:
-        m.quit(); time.sleep(2); p.kill(); shutil.rmtree(prof, ignore_errors=True)
+        m.quit(); time.sleep(2); p.kill()
+        shutil.rmtree(prof if 'xdg' not in prof else os.path.dirname(os.path.dirname(os.path.dirname(prof))), ignore_errors=True)
     return results
 
 

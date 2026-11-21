@@ -14,6 +14,7 @@ body {
   --color-accent-primary-hover: #e85a0c;
   --color-accent-primary-active: #d94f00;
   --focus-outline-color: #e0530a;
+  --focus-outline: 2px solid #d94f00;   /* derived at :root, so the whole value must be overridden */
   --text-color-link: #b93c00;
   --link-color: #b93c00;
   --background-color-canvas: #f4f4f7;
@@ -22,6 +23,7 @@ body {
 @media (prefers-color-scheme: dark) {
   body {
     --focus-outline-color: #ff6a1a;
+    --focus-outline: 2px solid #ff6a1a;
     --text-color-link: #ff8a4c;
     --link-color: #ff8a4c;
     --background-color-canvas: #14141a;

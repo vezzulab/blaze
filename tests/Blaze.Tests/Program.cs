@@ -1,3 +1,4 @@
+using Blaze.Core.Browser;
 using Blaze.Core.Downloads;
 using Blaze.Core.Updates;
 using Blaze.Tests;
@@ -302,6 +303,60 @@ await Test("21. GitHub rate limit (403) is reported as RateLimited, not as a cra
     var svc = new UpdateService(gh.Repo, gh.Verifier, gh.Base, allowInsecure: true);
     try { await svc.CheckAsync("0.1.0", true); throw new Exception("403 was not reported"); }
     catch (RateLimitedException) { }
+});
+
+await Test("22. rebrand: names, error CSS and artwork replaced; trademark line kept; clean zip; idempotent", async () =>
+{
+    var d = Tmp();
+    Directory.CreateDirectory(Path.Combine(d, "browser"));
+    void Jar(string path, Dictionary<string, string> files)
+    {
+        using var z = System.IO.Compression.ZipFile.Open(path, System.IO.Compression.ZipArchiveMode.Create);
+        foreach (var kv in files) { var e = z.CreateEntry(kv.Key); using var w = new StreamWriter(e.Open()); w.Write(kv.Value); }
+    }
+    const string fox = "<svg>FOX</svg>";
+    Jar(Path.Combine(d, "browser", "omni.ja"), new()
+    {
+        ["localization/en-US/branding/brand.ftl"] = "-brand-shorter-name = Firefox\n-brand-short-name = Firefox\n-brand-full-name = Mozilla Firefox\n-vendor-short-name = Mozilla\ntrademarkInfo = Firefox and the Firefox logos are trademarks of the Mozilla Foundation.\n",
+        ["localization/es-ES/branding/brand.ftl"] = "-brand-short-name =\n    { $case ->\n        [gen] de Firefox\n       *[nom] Firefox\n    }\n    .gender = masculine\n-vendor-short-name = Mozilla\n",
+        ["chrome/en-US/locale/branding/brand.properties"] = "brandShorterName=Firefox\nbrandShortName=Firefox\nbrandFullName=Mozilla Firefox\n",
+        ["chrome/toolkit/skin/classic/global/illustrations/kit-concerned.svg"] = fox,
+        ["modules/untouched.sys.mjs"] = "export const x = 1;",
+    });
+    Jar(Path.Combine(d, "omni.ja"), new()
+    {
+        ["chrome/toolkit/skin/classic/global/aboutNetError.css"] = "body{color:red}",
+        ["chrome/toolkit/skin/classic/global/illustrations/no-connection.svg"] = fox,
+        ["chrome/toolkit/skin/classic/global/illustrations/other.svg"] = "<svg>KEEP</svg>",
+    });
+    var assets = Path.Combine(d, "assets"); Directory.CreateDirectory(assets);
+    File.WriteAllText(Path.Combine(assets, "no-connection.svg"), "<svg>BLAZE</svg>");
+    File.WriteAllText(Path.Combine(assets, "kit-concerned.svg"), "<svg>BLAZE</svg>");
+
+    Check(Rebrand.Apply(d, "Blaze", ".x{--a:#ff6a1a}", assets) == RebrandResult.Rebranded, "first apply should rebrand");
+    string Read(string jar, string entry) { using var z = System.IO.Compression.ZipFile.OpenRead(Path.Combine(d, jar)); using var r = new StreamReader(z.GetEntry(entry)!.Open()); return r.ReadToEnd(); }
+
+    var en = Read("browser/omni.ja", "localization/en-US/branding/brand.ftl");
+    Check(en.Contains("-brand-short-name = Blaze") && en.Contains("-brand-full-name = Blaze") && en.Contains("-brand-shorter-name = Blaze"), "english names not replaced: " + en);
+    Check(en.Contains("trademarkInfo = Firefox and the Firefox logos are trademarks of the Mozilla Foundation."), "legal trademark line was altered");
+    Check(en.Contains("-vendor-short-name = Mozilla"), "vendor name must stay Mozilla");
+    var es = Read("browser/omni.ja", "localization/es-ES/branding/brand.ftl");
+    Check(es.Contains("-brand-short-name = Blaze") && es.Contains(".gender = masculine") && !es.Contains("[gen]"), "multi-line term not handled: " + es);
+    Check(Read("browser/omni.ja", "chrome/en-US/locale/branding/brand.properties").Contains("brandShortName=Blaze"), "properties not replaced");
+    Check(Read("browser/omni.ja", "chrome/toolkit/skin/classic/global/illustrations/kit-concerned.svg") == "<svg>BLAZE</svg>", "mascot artwork not replaced (browser jar)");
+    Check(Read("browser/omni.ja", "modules/untouched.sys.mjs") == "export const x = 1;", "an unrelated file changed");
+    var css = Read("omni.ja", "chrome/toolkit/skin/classic/global/aboutNetError.css");
+    Check(css.StartsWith("body{color:red}") && css.Contains("--a:#ff6a1a"), "error CSS not appended");
+    Check(Read("omni.ja", "chrome/toolkit/skin/classic/global/illustrations/no-connection.svg") == "<svg>BLAZE</svg>", "artwork not replaced (toolkit jar)");
+    Check(Read("omni.ja", "chrome/toolkit/skin/classic/global/illustrations/other.svg") == "<svg>KEEP</svg>", "an illustration we have no replacement for was touched");
+    var head = new byte[2]; using (var fs = File.OpenRead(Path.Combine(d, "omni.ja"))) fs.ReadExactly(head);
+    Check(head[0] == (byte)'P' && head[1] == (byte)'K', "result is not a clean zip starting at byte 0");
+    Check(Rebrand.Apply(d, "Blaze", ".x{--a:#ff6a1a}", assets) == RebrandResult.Unchanged, "second apply must be a no-op");
+    Check(Rebrand.Apply(d, "Blaze", ".x{--a:#000}", assets) == RebrandResult.Rebranded, "changed CSS must be applied again");
+    var css2 = Read("omni.ja", "chrome/toolkit/skin/classic/global/aboutNetError.css");
+    Check(css2.Split("/* ---- Blaze ---- */").Length == 2 && css2.Contains("#000") && !css2.Contains("#ff6a1a") && css2.StartsWith("body{color:red}"), "re-applying stacked a second Blaze block instead of replacing it: " + css2);
+    try { Rebrand.Apply(Tmp(), "Blaze", null); throw new Exception("a non-Firefox folder was accepted"); } catch (FileNotFoundException) { }
+    await Task.CompletedTask;
 });
 
 Console.WriteLine(failed == 0 ? "\nALL TESTS PASSED" : $"\n{failed} TEST(S) FAILED");

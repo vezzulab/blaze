@@ -24,22 +24,23 @@
 </p>
 
 <p align="center">
-  <img src="docs/assets/blaze-ember.png" alt="Blaze, tema oscuro (Ember)" width="860">
+  <img src="docs/assets/blaze-ember.png" alt="Blaze, tema oscuro (Ember): barra de direcciones redondeada, el interruptor Lite y los iconos de extensiones arriba a la derecha" width="860">
 </p>
 
 ---
 
 ## Qué es Blaze
 
-Blaze es un **navegador basado en Firefox**: una distribución del motor oficial de Firefox (Gecko), ajustada para quienes tienen conexiones lentas o con datos limitados y para equipos con poca memoria. Ejecuta el Firefox real, sin modificar, así que toda la web moderna funciona, incluidos YouTube, Spotify y tus extensiones. Encima, Blaze agrega:
+Blaze es un **navegador basado en Firefox**: una distribución del motor oficial de Firefox (Gecko), ajustada para quienes tienen conexiones lentas o con datos limitados y para equipos con poca memoria. Ejecuta el Firefox real, así que toda la web moderna funciona, incluidos YouTube, Spotify y tus extensiones. Encima, Blaze agrega:
 
 - un perfil ajustado (menos procesos, cachés pequeñas en memoria, una caché grande y persistente en disco, sin tráfico de fondo),
 - un **modo Lite** de un clic,
 - un **motor de descargas que se reanuda**,
 - una interfaz mínima con dos temas,
-- un lanzador que fija un Firefox probado y un actualizador firmado que te dice qué cambió antes de que decidas.
+- un lanzador que fija un Firefox probado y un actualizador firmado que te dice qué cambió antes de que decidas,
+- la marca Blaze en lugar de la de Firefox: el nombre en menús y diálogos, y páginas de error con ilustraciones de Blaze en vez de la mascota zorro de Firefox.
 
-Blaze **no** es un fork a nivel de código fuente y no modifica Gecko. Todo lo que no es Firefox vive en este repositorio y es lo bastante pequeño para leerse en una tarde.
+Blaze **no** es un fork a nivel de código fuente y no modifica el código de Gecko. En tu máquina solo cambia el nombre de Firefox, unos textos y las ilustraciones de las páginas de error por las de Blaze (ver [Límites conocidos](#límites-conocidos)). Todo lo que no es Firefox vive en este repositorio y es lo bastante pequeño para leerse en una tarde.
 
 > **Software en alfa.** Funciona de punta a punta (ver [Estado](#estado)), pero es joven. Lee los límites antes de depender de él.
 
@@ -73,12 +74,19 @@ Una página liviana en una línea rápida puede tardar minutos en una mala. Blaz
 | **A prueba de actualizaciones** | Blaze fija un Firefox concreto (verificado por checksum) y apaga el actualizador de Firefox, así que una actualización de origen no puede romper la interfaz. Una prueba de contrato de la interfaz vigila cada cambio de motor. |
 | **Actualizaciones que decides tú** | Consulta GitHub una vez al día, muestra las notas de la versión y descarga solo si dices que sí. Las versiones se firman con ECDSA; Blaze rechaza lo que no se verifique. |
 | **Dos temas** | **Ember** (oscuro) y **Ash** (claro), según tu sistema. Planos, compactos, sin desenfoques ni sombras, con el naranja como único acento. |
-| **Pequeño** | La aplicación Blaze es un AppImage de 4,5 MB. Su agente es un binario nativo AOT (unos 10 MB de RAM mientras descarga). |
+| **Se ve como Blaze** | Menús, diálogos y páginas de error dicen Blaze y usan ilustraciones de Blaze, no la mascota de Firefox. Ver abajo. |
+| **Pequeño** | La aplicación Blaze es un AppImage de menos de 5 MB. Su agente es un binario nativo AOT (unos 10 MB de RAM mientras descarga). |
 
 <p align="center">
-  <img src="docs/assets/blaze-ash.png" alt="Blaze, tema claro (Ash)" width="860">
+  <img src="docs/assets/blaze-ash.png" alt="Blaze, tema claro (Ash): la misma barra sobre fondo claro" width="860">
 </p>
 <p align="center"><sub>Capturado de una ventana real de Blaze. Solo se ve la interfaz; el área de la página sale vacía por la forma en que se toman las capturas.</sub></p>
+
+### Los errores también se ven como Blaze
+
+<p align="center">
+  <img src="docs/assets/blaze-error-ember.png" alt="Una página de error de Blaze: 'Blaze can't connect to the server', una llama con un cable desconectado y un botón naranja Try Again" width="640">
+</p>
 
 ## Instalar
 
@@ -137,12 +145,13 @@ flowchart LR
 | Área | Estado |
 |---|---|
 | Perfil de Firefox ajustado, modo Lite, temas | Funciona |
-| Motor de descargas | Funciona, 21 pruebas automáticas. Se usa desde la línea de comandos. |
+| Motor de descargas | Funciona, cubierto por la suite de 22 pruebas. Se usa desde la línea de comandos. |
 | Motor fijado + a prueba de actualizaciones + prueba de contrato | Funciona |
 | Actualizador firmado con notas de versión | Funciona, probado contra un GitHub simulado (incluidas versiones falsificadas y sin firma) |
 | AppImage | Se construye y arranca con y sin FUSE |
 | Interruptores de DRM, Safe Browsing y actualizaciones | Funciona |
-| Páginas de error y menús con la marca Blaze | **Experimental**: la herramienta de cambio de marca existe pero no está activada. Antes medimos su efecto en el tiempo de arranque. |
+| Marca Blaze: nombre, menús, páginas de error y sus ilustraciones | Funciona. El motor arranca igual de rápido que el original (0,4 s en estar listo, ambos). Cubierto por 1 prueba unitaria y el contrato de la interfaz. |
+| Tira de pestañas verticales a la derecha con el Firefox fijado | **No aparece en nuestras pruebas sin ventana** (sí con el Firefox de Fedora 159). Causa sin encontrar. Ver [Límites conocidos](#límites-conocidos). |
 | Motor de descargas dentro del botón de descargas del navegador | Planeado |
 | Excepciones de Lite por sitio | Planeado |
 | Página de nueva pestaña y panel de descargas propios | Planeado |
@@ -154,13 +163,16 @@ flowchart LR
 - El motor de descargas todavía no está conectado al botón de descargas de Firefox. Hoy descarga los componentes de Blaze (el motor, las extensiones, las actualizaciones) y se maneja desde una terminal: `blaze-agent get <url> --dir <carpeta>`.
 - Firefox de versión final solo acepta extensiones firmadas por Mozilla. Por eso Blaze carga su extensión Lite como complemento temporal en cada arranque, por un socket Unix privado que se cierra enseguida. Funciona, pero no es una instalación permanente.
 - Fijar Firefox significa que las correcciones de seguridad de Firefox te llegan **a través de las versiones de Blaze**, no por sí solas. Seguir el ritmo de versiones de Firefox es una regla de mantenimiento del proyecto ([docs/MAINTAINING.md](docs/MAINTAINING.md)), y el aviso de actualización es la forma de recibir esas correcciones.
+- **La tira de pestañas verticales a la derecha no aparece** en nuestra prueba automática de primer arranque con el Firefox que Blaze fija, aunque sí con el Firefox que viene en Fedora. Confirmamos que no la causan las políticas ni el cambio de marca de Blaze. Todavía no hemos comprobado si una ventana normal (no sin ventana) la muestra, así que considéralo sin resolver. `python3 tools/ui.py contract` lo reporta.
+- Privacy Badger abre su propia pestaña de bienvenida la primera vez que se instala.
+- El cambio de marca reescribe dos de los archivos de recursos del motor en tu máquina al instalarlo, como zips limpios. Firefox no se recompila.
 - Solo Linux x86_64. Los flujos de CI están escritos pero todavía no se han ejecutado.
 
 ## Desarrollo
 
 ```bash
 dotnet build
-(cd tests/Blaze.Tests && dotnet run -c Release)      # 21 pruebas: reanudación, cortes, actualizaciones falsas, límites de uso...
+(cd tests/Blaze.Tests && dotnet run -c Release)      # 22 pruebas: reanudación, cortes, actualizaciones falsas, límites de uso...
 python3 tools/ui.py contract                         # necesita el motor: ejecuta scripts/blaze una vez antes
 python3 tools/ui.py shot --scheme dark --out ember.png
 ```
