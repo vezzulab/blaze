@@ -94,12 +94,12 @@ Una página liviana en una línea rápida puede tardar minutos en una mala. Blaz
 **AppImage (Linux x86_64)**
 
 ```bash
-# 1. descarga Blaze-0.1.2-x86_64.AppImage (y SHA256SUMS y SHA256SUMS.sig para verificarlo) desde la página de Releases
+# 1. descarga Blaze-0.1.3-x86_64.AppImage (y SHA256SUMS y SHA256SUMS.sig para verificarlo) desde la página de Releases
 chmod +x Blaze-*-x86_64.AppImage
 ./Blaze-*-x86_64.AppImage
 ```
 
-La versión actual, **0.1.2** (software en alfa), publicada en la [página de Releases](https://github.com/vezzulab/blaze/releases) con su firma. **No uses la 0.1.0**: trae un Firefox desactualizado. ¿Prefieres compilarlo tú? Mira abajo. El primer arranque descarga Firefox 160.0.1 desde archive.mozilla.org (87 MB), lo verifica contra el SHA-256 fijado en [`engine.env`](engine.env) e instala las cuatro extensiones (unos 38 MB, de los que Bitwarden son 28). Si lo interrumpes, se reanuda. Después Firefox baja unos 49 MB en segundo plano (medido con Firefox 160.0.1: datos y listas de Mozilla 26, Widevine 17, Safe Browsing 6,5). En total unos 175 MB la primera vez; luego un arranque es casi silencioso. Con una conexión lenta, deja el primer arranque terminando.
+La versión actual, **0.1.3** (software en alfa), publicada en la [página de Releases](https://github.com/vezzulab/blaze/releases) con su firma. **No uses la 0.1.0**: trae un Firefox desactualizado. ¿Prefieres compilarlo tú? Mira abajo. El primer arranque descarga Firefox 160.0.1 desde archive.mozilla.org (87 MB), lo verifica contra el SHA-256 fijado en [`engine.env`](engine.env) e instala las cuatro extensiones (unos 38 MB, de los que Bitwarden son 28). Si lo interrumpes, se reanuda. Después Firefox baja unos 49 MB en segundo plano (medido con Firefox 160.0.1: datos y listas de Mozilla 26, Widevine 17, Safe Browsing 6,5). En total unos 175 MB la primera vez; luego un arranque es casi silencioso. Con una conexión lenta, deja el primer arranque terminando.
 
 **Desde el código** (necesita el SDK de .NET 10 con soporte AOT, `python3`, `curl`, `tar`, `xz`)
 
