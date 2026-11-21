@@ -36,6 +36,26 @@ Bytes through a counting proxy ([`tools/bench/countproxy.py`](../tools/bench/cou
 - Page load **times** varied wildly (the same BBC page took 36.8 s in one run and 9.7 s in another), so we publish bytes and calculate time from them. At 256 kbps (32,000 bytes/s): 6920 KB = 3 min 41 s, 4774 KB = 2 min 33 s, 3909 KB = 2 min 5 s.
 - One throttled run (about 256 kbps, Wikipedia only): 965 KB in 28.8 s as shipped, 739 KB in 22.3 s with Lite.
 
+## Where the memory goes with real tabs (Blaze 0.1.3, Firefox 160.0.1)
+
+Six real pages open (Wikipedia, Hacker News, BBC News, YouTube, GitHub, The Guardian), headless, 12 s after loading, memory as PSS per process type. **Single runs; the extension process in particular swings by about 100 MB between runs, so read these as orders of magnitude.**
+
+| Setup | Total | Extension process |
+|---|---:|---:|
+| Blaze as shipped (uBlock Origin, Privacy Badger, cookie notices, Bitwarden) | 1298 MB (other runs: 1374 MB) | 672 MB (other runs: 494, 502, 522) |
+| The same, no extensions at all | 744 MB | 37 MB |
+| Only uBlock Origin | 1027 to 1168 MB | 278 to 398 MB |
+| Only Bitwarden | 868 MB | 125 MB |
+| Only uBlock Origin Lite (MV3) | 774 to 853 MB | 35 to 36 MB |
+| uBlock Origin Lite + Privacy Badger + cookie notices + Bitwarden | 1083 to 1140 MB | 172 to 186 MB |
+
+What we learned, and what we ruled out:
+
+- **Extensions are the largest single cost**, about half the total. uBlock Origin alone is roughly 250 to 350 MB of it; uBlock Origin Lite is about 35 MB. Lite is a different, less powerful extension (it uses the browser's declarative rules), so swapping is a trade-off, not a free win.
+- **Weakening site isolation saves nothing** (1257 and 1338 MB against 1298 MB, within the noise). We did not do it: it would cost security for no measurable gain.
+- **Trimming uBlock Origin's filter lists did not help** in our runs (278 to 405 MB with trimmed lists, against 278 to 398 MB by default). We do not claim it does.
+- **Discarding the five idle tabs** brought the total from 1298 MB to 1121 MB, and the web content processes from 58 MB to 35 MB. Pages heavier than these save more. This is what the "sleeping tabs" feature does automatically.
+
 ## First start
 
 A new profile on Firefox 160.0.1 fetched about 49 MB in the background in 70 s (Mozilla's data and blocklists about 26 MB, Widevine 17 MB, Safe Browsing 6.5 MB), after the 87 MB engine download and about 38 MB of extensions (Bitwarden alone is 28 MB). On the earlier Firefox 159.0 the background figure was about 43 MB. One run each. See [PRIVACY.md](../PRIVACY.md). A start after that is near-silent.

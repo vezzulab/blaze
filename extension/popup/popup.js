@@ -16,3 +16,7 @@ toggle.addEventListener("change", async () => {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   if (tab && /^https?:/.test(tab.url || "")) browser.tabs.reload(tab.id);
 });
+
+const sleep = document.getElementById("sleep");
+browser.storage.local.get({ sleepIdleTabs: true }).then((r) => { sleep.checked = !!r.sleepIdleTabs; });
+sleep.addEventListener("change", () => browser.storage.local.set({ sleepIdleTabs: sleep.checked }));
