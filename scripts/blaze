@@ -4,7 +4,7 @@
 #   2. prepares the Blaze profile (prefs, UI theme, uBlock Origin, Privacy Badger)
 #   3. checks GitHub for a new Blaze release and lets the user decide (never touches Firefox)
 #   4. starts the browser and loads the Lite companion extension over a private Unix socket
-# Env: BLAZE_EXTRA_USERJS=/path (test hook: extra prefs appended to user.js), BLAZE_LOCALE, BLAZE_PROFILE, BLAZE_NO_UPDATE_CHECK=1, BLAZE_DRM=0, BLAZE_SAFEBROWSING=0, BLAZE_NO_REBRAND=1, BLAZE_HEADLESS=1, BLAZE_FIREFOX=/path (dev: skip engine install),
+# Env: BLAZE_EXTRA_USERJS=/path (test hook: extra prefs appended to user.js), BLAZE_LOCALE, BLAZE_PROFILE, BLAZE_NO_UPDATE_CHECK=1, BLAZE_DRM=0, BLAZE_SAFEBROWSING=0, BLAZE_NO_REBRAND=1, BLAZE_SYSTEM_TITLEBAR=1, BLAZE_HEADLESS=1, BLAZE_FIREFOX=/path (dev: skip engine install),
 #      BLAZE_BOOTSTRAP_ONLY=1, BLAZE_SELFTEST=1
 set -euo pipefail
 umask 077
@@ -166,6 +166,11 @@ SIDEBAR_MARK="$PROFILE/.blaze-sidebar-defaults-v1"
 if [ -f "$SIDEBAR_MARK" ]; then grep -v -E 'sidebar\.' "$SHARE/profile/user.js" > "$PROFILE/user.js"
 else cp "$SHARE/profile/user.js" "$PROFILE/user.js"; fi
 [ -n "${BLAZE_EXTRA_USERJS:-}" ] && cat "$BLAZE_EXTRA_USERJS" >> "$PROFILE/user.js"
+# Window buttons: by default Blaze draws them itself (right side, separated from navigation). If you would rather have your
+# desktop's own titlebar: BLAZE_SYSTEM_TITLEBAR=1 or  touch ~/.config/blaze/system-titlebar
+if [ "${BLAZE_SYSTEM_TITLEBAR:-}" = 1 ] || [ -e "${XDG_CONFIG_HOME:-$HOME/.config}/blaze/system-titlebar" ]; then
+  printf '%s\n' 'user_pref("browser.tabs.inTitlebar", 0);' >> "$PROFILE/user.js"
+fi
 if drm_enabled; then
   printf '%s\n' 'user_pref("media.eme.enabled", true);' 'user_pref("media.gmp-widevinecdm.enabled", true);' 'user_pref("media.gmp-widevinecdm.visible", true);' >> "$PROFILE/user.js"
 else

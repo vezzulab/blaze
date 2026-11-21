@@ -98,7 +98,9 @@ def make_profile(firefox, scheme):
         if r.returncode != 0: raise RuntimeError("scripts/blaze failed:\n" + r.stderr[-600:])
         prof = os.path.join(xdg, "blaze", "profile")
         with open(f"{prof}/user.js", "a") as f: f.write(f'\nuser_pref("ui.systemUsesDarkTheme", {1 if scheme == "dark" else 0});\n')
-        with open(f"{prof}/chrome/userChrome.css", "a") as f: f.write("\n#remote-control-box{display:none!important}\n")  # automation stripes
+        with open(f"{prof}/chrome/userChrome.css", "a") as f:
+            f.write("\n#remote-control-box{display:none!important}\n")  # automation stripes
+            if os.environ.get("BLAZE_UI_EXTRA_CSS"): f.write(open(os.environ["BLAZE_UI_EXTRA_CSS"]).read())   # test hook
         return prof
 
     prof = tempfile.mkdtemp(prefix="blaze-ui-")
@@ -117,6 +119,7 @@ PROBE = r"""
 const out={}; const q=(s)=>document.querySelector(s); const cs=(e)=>e?window.getComputedStyle(e):null;
 const t=(k,f)=>{try{out[k]=f()}catch(e){out[k]='ERR '+e.message}};
 t('brand',()=>Services.strings.createBundle('chrome://branding/locale/brand.properties').GetStringFromName('brandShortName'));
+t('winctl',()=>{const e=document.querySelector('#nav-bar > .titlebar-buttonbox-container');if(!e)return null;const c=getComputedStyle(e);return {order:c.order,gap:c.marginInlineStart,corner:c.marginInlineEnd,radius:c.borderTopLeftRadius,border:parseFloat(c.borderTopWidth)}});
 t('back',()=>!!q('#back-button')&&cs(q('#back-button')).display!=='none');
 t('reload',()=>{const r=q('#reload-button');return !!r&&cs(r).display!=='none'});
 t('urlbarBgEl',()=>!!q('#urlbar > .urlbar-background'));
@@ -178,6 +181,8 @@ def check_scheme(firefox, scheme, shot=None):
 
         def ck(name, ok, detail=""): results.append((name, bool(ok), detail))
         ck("engine presents itself as Blaze (brand name)", o["brand"] == "Blaze", f"brandShortName={o['brand']}; run scripts/blaze so the engine is rebranded")
+        wc = o["winctl"] if isinstance(o["winctl"], dict) else {}
+        ck("window buttons: own bordered group, last in the toolbar, clear of the neighbours and of the window corner", wc.get("order") == "1000" and wc.get("gap") not in (None, "0px") and wc.get("border", 0) >= 1 and wc.get("corner") not in (None, "0px"), str(o["winctl"]))
         ck("back + reload buttons exist", o["back"] is True and o["reload"] is True, f"back={o['back']} reload={o['reload']}")
         ck("urlbar background element is .urlbar-background", o["urlbarBgEl"] is True)
         ub = o["urlbarBg"] if isinstance(o["urlbarBg"], dict) else {}

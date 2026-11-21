@@ -48,6 +48,7 @@ packaging/build-appimage.sh
 - `user.js` values are persisted into `prefs.js`; removing a line does not undo it.
 - Release Firefox rejects unsigned add-ons from the profile; Blaze loads the extension as a temporary add-on over a Unix socket (`-start-debugger-server <path>`). Socket paths are limited to ~108 chars.
 - Error pages are drawn by a shadow-DOM component (`net-error-card`): user CSS cannot reach them.
+- Window buttons: with the tabs in the side strip, Firefox draws them INSIDE `#nav-bar` (`.titlebar-buttonbox-container`, one per toolbar; headless shows them `display:none`). Blaze gives that group `order:1000`, a border and margins. The contract checks computed styles only; to see it use `BLAZE_UI_EXTRA_CSS=<file forcing the buttons visible> tools/ui.py shot`. The real look on the owner's desktop was never seen.
 - Headless windows report zero-size layout boxes; test styles and prefs, not geometry.
 - `spectacle` is broken on the owner's machine. Marionette screenshots capture the interface only (page area blank).
 - `pkill -f <pattern>` kills your own shell if the same command line contains the pattern; use `[x]yz` in its own command, or kill by PID. Never kill every `firefox` process: the owner has windows open.

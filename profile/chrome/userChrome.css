@@ -146,6 +146,31 @@ findbar { background: var(--blaze-surface) !important; border: none !important; 
 }
 #blaze-companion_blaze_local-browser-action .toolbarbutton-badge { display: none !important; } /* pill color already says ON */
 
+/* ---------- window controls (minimize / maximize / close): far right, clearly apart from navigation ----------
+   With the tabs in the side strip, Firefox draws the window buttons INSIDE the navigation bar, glued to the menu and the Lite
+   switch. They get their own bordered, rounded group at the extreme right, with a gap, and Close turns red on hover.
+   (Firefox 160 has three .titlebar-buttonbox-container: menubar, TabsToolbar, nav-bar; only the visible one is drawn.
+   If the system draws its own titlebar they are display:none and none of this applies.) */
+#nav-bar > .titlebar-buttonbox-container {
+  order: 1000 !important;                       /* after Lite (99) and the menu, whatever side the system layout prefers */
+  margin-inline: 18px 12px !important;           /* gap from the menu, and clear of the window corner */
+  margin-block: 4px !important;
+  padding: 3px !important;
+  align-items: center;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--blaze-fg) 7%, transparent);
+  border: 1px solid var(--blaze-field-border);              /* the whole group reads as one separate control */
+}
+#nav-bar > .titlebar-buttonbox-container .titlebar-buttonbox { gap: 2px; }
+#nav-bar .titlebar-button {
+  width: 32px; height: 28px;
+  border-radius: 8px !important;
+  padding: 0 !important; margin: 0 !important;
+}
+#nav-bar .titlebar-button:hover { background: color-mix(in srgb, var(--blaze-fg) 14%, transparent) !important; }
+#nav-bar .titlebar-close:hover { background: #d93025 !important; color: #ffffff !important; }   /* red = leaves the app */
+#nav-bar .titlebar-close:hover .toolbarbutton-icon { fill: #ffffff !important; }
+
 /* ---------- remove chrome nobody needs ---------- */
 #firefox-view-button, #alltabs-button, .titlebar-spacer,
 #smartwindow-group-tabs-button, #ai-window-toggle, #fxa-toolbar-menu-button, #sidebar-button,

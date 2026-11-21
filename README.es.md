@@ -118,6 +118,7 @@ Blaze mantiene sus interruptores deliberadamente simples: una variable de entorn
 | DRM (Widevine) | `BLAZE_DRM=0` o `touch ~/.config/blaze/no-drm` | Spotify, Netflix y similares dejan de funcionar. No se contacta a Google para el módulo. |
 | Safe Browsing | `BLAZE_SAFEBROWSING=0` o `touch ~/.config/blaze/no-safebrowsing` | Más privado y ligero (unos 10 MB menos al primer arranque), pero sin avisos de phishing. |
 | Consulta diaria de actualizaciones | `BLAZE_NO_UPDATE_CHECK=1` o `touch ~/.config/blaze/no-update-check` | Compruébalo a mano con `blaze --update`. |
+| Botones de ventana | `BLAZE_SYSTEM_TITLEBAR=1` o `touch ~/.config/blaze/system-titlebar` | Por defecto Blaze dibuja minimizar / maximizar / cerrar como un grupo propio en el extremo derecho, aparte de la navegación. Este ajuste se los devuelve a la barra de título de tu escritorio. |
 | Idioma de Firefox | `BLAZE_LOCALE=es-MX` | Están fijados `en-US`, `es-ES`, `es-MX`, `es-AR`. Por defecto sigue `$LANG`. |
 
 ## Cómo funciona

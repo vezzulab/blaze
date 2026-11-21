@@ -118,6 +118,7 @@ Blaze keeps its switches deliberately simple: an environment variable or an empt
 | DRM (Widevine) | `BLAZE_DRM=0` or `touch ~/.config/blaze/no-drm` | Spotify, Netflix and similar stop working. No contact with Google for the module. |
 | Safe Browsing | `BLAZE_SAFEBROWSING=0` or `touch ~/.config/blaze/no-safebrowsing` | More private and lighter (about 10 MB less on first run), but no phishing warnings. |
 | Daily update check | `BLAZE_NO_UPDATE_CHECK=1` or `touch ~/.config/blaze/no-update-check` | Check by hand with `blaze --update`. |
+| Window buttons | `BLAZE_SYSTEM_TITLEBAR=1` or `touch ~/.config/blaze/system-titlebar` | By default Blaze draws minimize / maximize / close as their own group at the far right, apart from the navigation. This switch hands them back to your desktop's titlebar. |
 | Language of Firefox | `BLAZE_LOCALE=es-MX` | `en-US`, `es-ES`, `es-MX`, `es-AR` are pinned. Default follows `$LANG`. |
 
 ## How it works
