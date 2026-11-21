@@ -93,12 +93,12 @@ A page that is light on a fast line can take minutes on a bad one. Blaze attacks
 **AppImage (Linux x86_64)**
 
 ```bash
-# 1. download Blaze-0.1.0-x86_64.AppImage (plus SHA256SUMS and SHA256SUMS.sig to verify it) from the Releases page
+# 1. download Blaze-0.1.1-x86_64.AppImage (plus SHA256SUMS and SHA256SUMS.sig to verify it) from the Releases page
 chmod +x Blaze-*-x86_64.AppImage
 ./Blaze-*-x86_64.AppImage
 ```
 
-The first release, **0.1.0, is a pre-release** (alpha), published on the [Releases page](https://github.com/vezzulab/blaze/releases) with its signature. Prefer to build it yourself? See below. The first start downloads Firefox 160.0.1 from archive.mozilla.org (87 MB), verifies it against the SHA-256 pinned in [`engine.env`](engine.env), and installs uBlock Origin and Privacy Badger. Interrupt it and it resumes. Firefox then fetches about 43 MB in the background (Widevine 17, Safe Browsing 10, Mozilla blocklists 8, uBlock/Privacy Badger lists 5). Afterwards a start is nearly silent.
+The current release, **0.1.1, is a pre-release** (alpha), published on the [Releases page](https://github.com/vezzulab/blaze/releases) with its signature. **Do not use 0.1.0**: it ships an out-of-date Firefox. Prefer to build it yourself? See below. The first start downloads Firefox 160.0.1 from archive.mozilla.org (87 MB), verifies it against the SHA-256 pinned in [`engine.env`](engine.env), and installs uBlock Origin and Privacy Badger. Interrupt it and it resumes. Firefox then fetches about 43 MB in the background (Widevine 17, Safe Browsing 10, Mozilla blocklists 8, uBlock/Privacy Badger lists 5). Afterwards a start is nearly silent.
 
 **From source** (needs the .NET 10 SDK with AOT support, `python3`, `curl`, `tar`, `xz`)
 

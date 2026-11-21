@@ -93,12 +93,12 @@ Una página liviana en una línea rápida puede tardar minutos en una mala. Blaz
 **AppImage (Linux x86_64)**
 
 ```bash
-# 1. descarga Blaze-0.1.0-x86_64.AppImage (y SHA256SUMS y SHA256SUMS.sig para verificarlo) desde la página de Releases
+# 1. descarga Blaze-0.1.1-x86_64.AppImage (y SHA256SUMS y SHA256SUMS.sig para verificarlo) desde la página de Releases
 chmod +x Blaze-*-x86_64.AppImage
 ./Blaze-*-x86_64.AppImage
 ```
 
-La primera versión, **0.1.0, es una prerelease** (alfa), publicada en la [página de Releases](https://github.com/vezzulab/blaze/releases) con su firma. ¿Prefieres compilarlo tú? Mira abajo. El primer arranque descarga Firefox 160.0.1 desde archive.mozilla.org (87 MB), lo verifica contra el SHA-256 fijado en [`engine.env`](engine.env) e instala uBlock Origin y Privacy Badger. Si lo interrumpes, se reanuda. Después Firefox baja unos 43 MB en segundo plano (Widevine 17, Safe Browsing 10, listas de bloqueo de Mozilla 8, listas de uBlock/Privacy Badger 5). Luego un arranque es casi silencioso.
+La versión actual, **0.1.1, es una prerelease** (alfa), publicada en la [página de Releases](https://github.com/vezzulab/blaze/releases) con su firma. **No uses la 0.1.0**: trae un Firefox desactualizado. ¿Prefieres compilarlo tú? Mira abajo. El primer arranque descarga Firefox 160.0.1 desde archive.mozilla.org (87 MB), lo verifica contra el SHA-256 fijado en [`engine.env`](engine.env) e instala uBlock Origin y Privacy Badger. Si lo interrumpes, se reanuda. Después Firefox baja unos 43 MB en segundo plano (Widevine 17, Safe Browsing 10, listas de bloqueo de Mozilla 8, listas de uBlock/Privacy Badger 5). Luego un arranque es casi silencioso.
 
 **Desde el código** (necesita el SDK de .NET 10 con soporte AOT, `python3`, `curl`, `tar`, `xz`)
 
