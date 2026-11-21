@@ -1,0 +1,43 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Prerequisites
+        run: sudo apt-get update && sudo apt-get install -y clang zlib1g-dev imagemagick
+      - name: Tag must match the project version
+        run: |
+          v="$(grep -oP '(?<=<Version>)[^<]+' src/Blaze.Agent/Blaze.Agent.csproj)"
+          [ "v$v" = "${GITHUB_REF_NAME}" ] || { echo "tag ${GITHUB_REF_NAME} != project version v$v"; exit 1; }
+      - name: Tests
+        working-directory: tests/Blaze.Tests
+        run: dotnet run -c Release
+      - name: Build AppImage
+        run: packaging/build-appimage.sh
+      - name: Sign
+        env:
+          KEY: ${{ secrets.BLAZE_SIGNING_KEY }}
+        run: |
+          umask 077
+          printf '%s\n' "$KEY" > "$RUNNER_TEMP/release-key.pem"
+          BLAZE_SIGNING_KEY="$RUNNER_TEMP/release-key.pem" tools/sign-release.sh dist/Blaze-*-x86_64.AppImage
+          shred -u "$RUNNER_TEMP/release-key.pem"
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          args=(--title "Blaze ${GITHUB_REF_NAME#v}")
+          case "${GITHUB_REF_NAME}" in v0.*) args+=(--prerelease);; esac
+          if [ -f RELEASE_NOTES.md ]; then args+=(--notes-file RELEASE_NOTES.md); else args+=(--generate-notes); fi
+          gh release create "${GITHUB_REF_NAME}" dist/Blaze-*-x86_64.AppImage dist/SHA256SUMS dist/SHA256SUMS.sig "${args[@]}"

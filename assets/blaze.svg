@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>Blaze</title>
+  <rect width="512" height="512" rx="116" fill="#ff6a1a"/>
+  <!-- flame -->
+  <path fill="#ffffff" d="M262 64C300 128 392 178 392 300C392 384 332 444 256 444C180 444 120 384 120 300C120 248 148 214 178 188C180 224 198 246 220 254C206 190 226 124 262 64Z"/>
+  <!-- inner flame (cut-out in the tile color) -->
+  <path fill="#ff6a1a" d="M256 256C282 296 318 318 318 360C318 394 292 416 256 416C220 416 194 394 194 360C194 322 230 298 256 256Z"/>
+</svg>

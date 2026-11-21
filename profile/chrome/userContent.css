@@ -1,0 +1,6 @@
+/* Blaze internal pages follow the same Ember/Ash tokens (no white flash in dark mode). */
+@-moz-document url("about:blank"), url("about:newtab"), url("about:home") {
+  :root { --bg: #f4f4f7; --fg: #1b1b22; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #14141a; --fg: #ececf1; } }
+  html, body { background: var(--bg) !important; color: var(--fg) !important; }
+}

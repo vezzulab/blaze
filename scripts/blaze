@@ -1,0 +1,220 @@
+#!/usr/bin/env bash
+# Blaze launcher. Works from the AppImage and from a source checkout.
+#   1. installs the pinned, checksum-verified Firefox engine (resumable download, first run only)
+#   2. prepares the Blaze profile (prefs, UI theme, uBlock Origin, Privacy Badger)
+#   3. checks GitHub for a new Blaze release and lets the user decide (never touches Firefox)
+#   4. starts the browser and loads the Lite companion extension over a private Unix socket
+# Env: BLAZE_EXTRA_USERJS=/path (test hook: extra prefs appended to user.js), BLAZE_LOCALE, BLAZE_PROFILE, BLAZE_NO_UPDATE_CHECK=1, BLAZE_DRM=0, BLAZE_SAFEBROWSING=0, BLAZE_HEADLESS=1, BLAZE_FIREFOX=/path (dev: skip engine install),
+#      BLAZE_BOOTSTRAP_ONLY=1, BLAZE_SELFTEST=1
+set -euo pipefail
+umask 077
+
+HERE="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+if [ -n "${APPDIR:-}" ] && [ -d "$APPDIR/usr/share/blaze" ]; then
+  SHARE="$APPDIR/usr/share/blaze"; AGENT="$APPDIR/usr/bin/blaze-agent"
+else
+  SHARE="$(cd "$HERE/.." && pwd)"; AGENT="${BLAZE_AGENT:-$SHARE/dist/agent/blaze-agent}"
+fi
+DATA="${XDG_DATA_HOME:-$HOME/.local/share}/blaze"
+PROFILE="${BLAZE_PROFILE:-$DATA/profile}"
+ENGINE_ROOT="$DATA/engine"
+
+say()  { printf 'blaze: %s\n' "$*" >&2; }
+die()  { printf 'blaze: error: %s\n' "$*" >&2; exit 1; }
+[ -x "$AGENT" ] || die "agent not found at $AGENT (build it: dotnet publish src/Blaze.Agent -c Release -r linux-x64 -o dist/agent)"
+mkdir -p "$DATA"
+
+# ---------------------------------------------------------------- 1. engine
+# shellcheck source=/dev/null
+. "$SHARE/engine.env"
+
+pick_locale() {
+  local l="${BLAZE_LOCALE:-}"
+  if [ -z "$l" ]; then
+    case "${LANG:-en_US}" in es_ES*) l=es-ES;; es_MX*) l=es-MX;; es_AR*) l=es-AR;; es_*) l=es-MX;; *) l=en-US;; esac
+  fi
+  local var="SHA256_${l//-/_}"
+  [ -n "${!var:-}" ] || { say "no pinned checksum for locale '$l', using en-US"; l=en-US; }
+  printf '%s' "$l"
+}
+
+install_engine() {
+  local locale="$1" var="SHA256_${1//-/_}"
+  local v="$FIREFOX_VERSION" want="${!var}"
+  local dir="$ENGINE_ROOT/$v-$locale" tar="firefox-$v-$locale.tar.xz"
+  [ -x "$dir/firefox/firefox" ] && return 0
+
+  say "first run: downloading Firefox $v ($locale) from archive.mozilla.org (resumable; safe to interrupt)"
+  mkdir -p "$ENGINE_ROOT/dl"
+  "$AGENT" get "https://archive.mozilla.org/pub/firefox/releases/$v/linux-x86_64/$locale/firefox-$v.tar.xz" \
+      --dir "$ENGINE_ROOT/dl" --name "$tar" --connections 4 --quiet >/dev/null
+  say "verifying SHA-256"
+  if ! printf '%s  %s\n' "$want" "$ENGINE_ROOT/dl/$tar" | sha256sum -c --status -; then
+    rm -f "$ENGINE_ROOT/dl/$tar"; die "Firefox download failed its checksum; deleted. Run Blaze again to retry."
+  fi
+  rm -rf "$dir.tmp"; mkdir -p "$dir.tmp"
+  tar -xJf "$ENGINE_ROOT/dl/$tar" -C "$dir.tmp"
+  rm -rf "$dir"; mv "$dir.tmp" "$dir"
+  rm -f "$ENGINE_ROOT/dl/$tar"
+  # keep exactly one engine on disk
+  for old in "$ENGINE_ROOT"/*/; do [ "${old%/}" = "$dir" ] || [ "$(basename "$old")" = dl ] || rm -rf "$old"; done
+}
+
+# DRM (Widevine): proprietary Google module that Firefox downloads on first use. Needed for Spotify, Netflix, etc.
+# Default ON because users asked for it; off with BLAZE_DRM=0 or:  touch ~/.config/blaze/no-drm
+drm_enabled() { [ "${BLAZE_DRM:-1}" != 0 ] && [ ! -e "${XDG_CONFIG_HOME:-$HOME/.config}/blaze/no-drm" ]; }
+
+# Safe Browsing (phishing/malware lists from Google, ~10 MB on first run). ON by default (it protects users);
+# off with BLAZE_SAFEBROWSING=0 or:  touch ~/.config/blaze/no-safebrowsing   (more private and lighter, but no phishing warnings)
+sb_enabled() { [ "${BLAZE_SAFEBROWSING:-1}" != 0 ] && [ ! -e "${XDG_CONFIG_HOME:-$HOME/.config}/blaze/no-safebrowsing" ]; }
+
+write_policies() {   # $1 = firefox dir ; rewritten on every start so policy changes reach existing installs
+  local eme=true; drm_enabled || eme=false
+  mkdir -p "$1/distribution"
+  cat > "$1/distribution/policies.json" <<POLICIES
+{
+  "policies": {
+    "DisableAppUpdate": true,
+    "DisableTelemetry": true,
+    "DisableFirefoxStudies": true,
+    "DisablePocket": true,
+    "DisableAccounts": true,
+    "DisableFeedbackCommands": true,
+    "DontCheckDefaultBrowser": true,
+    "NoDefaultBookmarks": true,
+    "OverrideFirstRunPage": "",
+    "OverridePostUpdatePage": "",
+    "EncryptedMediaExtensions": { "Enabled": $eme, "Locked": false },
+    "UserMessaging": {
+      "ExtensionRecommendations": false, "FeatureRecommendations": false, "UrlbarInterventions": false,
+      "SkipOnboarding": true, "MoreFromMozilla": false, "FirefoxLabs": false
+    }
+  }
+}
+POLICIES
+}
+
+if [ -n "${BLAZE_FIREFOX:-}" ]; then FIREFOX="$BLAZE_FIREFOX"; say "using BLAZE_FIREFOX=$FIREFOX (developer override; engine NOT pinned)"
+else LOCALE="$(pick_locale)"; install_engine "$LOCALE"; FIREFOX="$ENGINE_ROOT/$FIREFOX_VERSION-$LOCALE/firefox/firefox"; fi
+[ -x "$FIREFOX" ] || die "Firefox engine missing at $FIREFOX"
+[ -z "${BLAZE_FIREFOX:-}" ] && write_policies "$(dirname "$FIREFOX")"
+
+# ---------------------------------------------------------------- 2. profile
+mkdir -p "$PROFILE/chrome" "$PROFILE/extensions"
+running() { pgrep -f -- "-profile $PROFILE" >/dev/null 2>&1; }
+
+# One-time layout init: a profile FIRST started with vertical tabs gets a toolbar without Reload/Downloads (Firefox 159).
+MARK="$PROFILE/.blaze-layout-v1"
+if [ ! -f "$MARK" ] && ! running; then
+  [ -f "$PROFILE/prefs.js" ] && sed -i -E '/"(sidebar\.[A-Za-z.]+|browser\.uiCustomization\.[A-Za-z.]+)"/d' "$PROFILE/prefs.js"
+  grep -v -E 'sidebar\.' "$SHARE/profile/user.js" > "$PROFILE/user.js"
+  [ -n "${BLAZE_EXTRA_USERJS:-}" ] && cat "$BLAZE_EXTRA_USERJS" >> "$PROFILE/user.js"
+  timeout -s TERM 20 "$FIREFOX" --headless --no-remote --profile "$PROFILE" about:blank >/dev/null 2>&1 || true
+  touch "$MARK"
+fi
+# user.js values get persisted into prefs.js, so removing a line from user.js does not undo it: drop stale theme overrides.
+if [ -f "$PROFILE/prefs.js" ] && ! running; then
+  sed -i -E '/"(ui\.systemUsesDarkTheme|browser\.theme\.toolbar-theme|browser\.theme\.content-theme|layout\.css\.prefers-color-scheme\.content-override)"/d' "$PROFILE/prefs.js"
+fi
+# Sidebar layout (right side, collapsed, expands on hover) is a DEFAULT, not a rule: it is applied on the first run only.
+# After that Firefox keeps whatever the user chose, because user.js is re-applied on every start and would undo it.
+SIDEBAR_MARK="$PROFILE/.blaze-sidebar-defaults-v1"
+if [ -f "$SIDEBAR_MARK" ]; then grep -v -E 'sidebar\.' "$SHARE/profile/user.js" > "$PROFILE/user.js"
+else cp "$SHARE/profile/user.js" "$PROFILE/user.js"; fi
+[ -n "${BLAZE_EXTRA_USERJS:-}" ] && cat "$BLAZE_EXTRA_USERJS" >> "$PROFILE/user.js"
+if drm_enabled; then
+  printf '%s\n' 'user_pref("media.eme.enabled", true);' 'user_pref("media.gmp-widevinecdm.enabled", true);' 'user_pref("media.gmp-widevinecdm.visible", true);' >> "$PROFILE/user.js"
+else
+  printf '%s\n' 'user_pref("media.eme.enabled", false);' 'user_pref("media.gmp-widevinecdm.enabled", false);' 'user_pref("media.gmp-widevinecdm.visible", false);' 'user_pref("media.gmp-provider.enabled", false);' >> "$PROFILE/user.js"
+fi
+if ! sb_enabled; then
+  for k in malware.enabled phishing.enabled downloads.enabled downloads.remote.enabled blockedURIs.enabled; do
+    printf 'user_pref("browser.safebrowsing.%s", false);\n' "$k" >> "$PROFILE/user.js"
+  done
+fi
+cat >> "$PROFILE/user.js" <<'EOF'
+user_pref("devtools.debugger.remote-enabled", true);   // only used when started with -start-debugger-server (private socket)
+user_pref("devtools.debugger.prompt-connection", false);
+user_pref("devtools.chrome.enabled", true);
+EOF
+cp "$SHARE"/profile/chrome/*.css "$PROFILE/chrome/"
+
+fetch_addon() {  # id url ; Mozilla signs these, Firefox enforces it
+  [ -s "$PROFILE/extensions/$1.xpi" ] && return 0
+  say "installing $1"
+  "$AGENT" get "$2" --dir "$PROFILE/extensions" --name "$1.xpi" --quiet >/dev/null || say "could not download $1 (will retry next start)"
+}
+fetch_addon 'uBlock0@raymondhill.net'     'https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi'
+fetch_addon 'jid1-MnnxcxisBPnSXQ@jetpack' 'https://addons.mozilla.org/firefox/downloads/latest/privacy-badger17/latest.xpi'
+
+[ "${BLAZE_BOOTSTRAP_ONLY:-}" = 1 ] && { say "bootstrap done"; exit 0; }
+
+# ---------------------------------------------------------------- 3. Blaze updates (checks are tiny and automatic; downloading is the user's decision)
+escape_markup() { sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g'; }
+
+prompt_update() {
+  local v="$1" cur notes msg choice
+  cur="$("$AGENT" version 2>/dev/null || echo '?')"
+  notes="$(cat "$DATA/update/notes.txt" 2>/dev/null | escape_markup || true)"
+  msg="Blaze $v is available (you have $cur).
+
+${notes:-No release notes were provided.}
+
+Blaze only downloads Blaze: Firefox stays pinned and is never updated on its own."
+  choice=later
+  if command -v kdialog >/dev/null 2>&1 && [ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]; then
+    if kdialog --title "Blaze update" --yes-label "Update now" --no-label "Later" --cancel-label "Skip this version" --yesnocancel "$msg" 2>/dev/null
+    then choice=now; else case $? in 2) choice=skip;; *) choice=later;; esac; fi
+  elif command -v zenity >/dev/null 2>&1 && [ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]; then
+    local out; out="$(zenity --question --title="Blaze update" --text="$msg" --ok-label="Update now" --cancel-label="Later" --extra-button="Skip this version" 2>/dev/null)" \
+      && choice=now || { [ "$out" = "Skip this version" ] && choice=skip || choice=later; }
+  elif [ -t 0 ]; then
+    printf '\nBlaze %s is available (you have %s).\n\n%s\n\n[u]pdate now / [l]ater / [s]kip this version: ' "$v" "$cur" "$(cat "$DATA/update/notes.txt" 2>/dev/null)" >&2
+    read -r a; case "$a" in u*) choice=now;; s*) choice=skip;; esac
+  else
+    command -v notify-send >/dev/null 2>&1 && notify-send "Blaze $v is available" "Run 'blaze --update' to see what's new and update." || true
+  fi
+
+  case "$choice" in
+    skip) "$AGENT" update skip "$v" >/dev/null ;;
+    now)  apply_update ;;
+  esac
+}
+
+apply_update() {
+  if [ -z "${APPIMAGE:-}" ]; then say "running from source: update with 'git pull' and rebuild"; return 0; fi
+  command -v notify-send >/dev/null 2>&1 && notify-send "Blaze" "Downloading the update (resumable)..." || true
+  if "$AGENT" update apply --target "$APPIMAGE" >/dev/null 2>&1; then
+    command -v notify-send >/dev/null 2>&1 && notify-send "Blaze updated" "Restart Blaze to use the new version. The previous build is kept as $(basename "$APPIMAGE").old" || say "updated; restart Blaze"
+  else say "update failed; your current Blaze is unchanged"; fi
+}
+
+if [ "${1:-}" = "--update" ]; then
+  r="$("$AGENT" update check --force)"; say "$r"
+  case "$r" in UPDATE_AVAILABLE*) prompt_update "${r#UPDATE_AVAILABLE }";; esac
+  exit 0
+fi
+if [ "${BLAZE_NO_UPDATE_CHECK:-}" != 1 ] && [ ! -e "${XDG_CONFIG_HOME:-$HOME/.config}/blaze/no-update-check" ]; then
+  ( r="$("$AGENT" update check 2>/dev/null || true)"
+    case "$r" in UPDATE_AVAILABLE*) prompt_update "${r#UPDATE_AVAILABLE }";; esac ) &
+fi
+
+# ---------------------------------------------------------------- 4. run
+RUNDIR="${XDG_RUNTIME_DIR:-/tmp}/blaze-$$"
+mkdir -m 700 "$RUNDIR"
+trap 'rm -rf "$RUNDIR"' EXIT
+SOCK="$RUNDIR/d.sock"
+
+touch "$SIDEBAR_MARK"
+"$FIREFOX" --no-remote --profile "$PROFILE" -start-debugger-server "$SOCK" --name Blaze --class Blaze \
+    ${BLAZE_HEADLESS:+--headless} "$@" &
+FFPID=$!
+
+if id="$("$AGENT" addon-install --socket "$SOCK" --path "$SHARE/extension" --wait 60 2>&1)"; then
+  rm -f "$SOCK"      # nothing can connect to the debugger channel any more
+  [ "${BLAZE_SELFTEST:-}" = 1 ] && { echo "SELFTEST_OK $id"; kill "$FFPID" 2>/dev/null || true; wait "$FFPID" 2>/dev/null || true; exit 0; }
+else
+  say "Lite extension could not be loaded: $id"
+  [ "${BLAZE_SELFTEST:-}" = 1 ] && { kill "$FFPID" 2>/dev/null || true; exit 1; }
+fi
+wait "$FFPID"

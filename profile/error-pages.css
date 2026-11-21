@@ -1,0 +1,30 @@
+/* Blaze skin for Firefox's internal error pages (about:neterror, certificate, blocked, offline...).
+   Appended to the engine's aboutNetError.css by `blaze-agent rebrand`. The page is built with design-system
+   custom properties, which inherit into its shadow DOM, so setting them here recolors the whole page. */
+body {
+  --blaze-accent: #ff6a1a;
+  --blaze-on-accent: #14141a;
+  --button-background-color-primary: #ff6a1a;
+  --button-background-color-primary-hover: #e85a0c;
+  --button-background-color-primary-active: #d94f00;
+  --button-text-color-primary: #14141a;
+  --button-text-color-primary-hover: #14141a;
+  --button-text-color-primary-active: #14141a;
+  --color-accent-primary: #ff6a1a;
+  --color-accent-primary-hover: #e85a0c;
+  --color-accent-primary-active: #d94f00;
+  --focus-outline-color: #e0530a;
+  --text-color-link: #b93c00;
+  --link-color: #b93c00;
+  --background-color-canvas: #f4f4f7;
+  --in-content-page-background: #f4f4f7;
+}
+@media (prefers-color-scheme: dark) {
+  body {
+    --focus-outline-color: #ff6a1a;
+    --text-color-link: #ff8a4c;
+    --link-color: #ff8a4c;
+    --background-color-canvas: #14141a;
+    --in-content-page-background: #14141a;
+  }
+}

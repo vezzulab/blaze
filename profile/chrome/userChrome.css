@@ -1,0 +1,182 @@
+/* =====================================================================
+   BLAZE UI  -  themes "Ember" (dark) and "Ash" (light). Follows the OS.
+   Principles: flat (no blur / no shadows), compact, AA contrast, minimal motion.
+   Everything is driven by the --blaze-* tokens; to retheme, edit only the two token blocks.
+   ===================================================================== */
+
+/* ---------- tokens: Ash (light) is the default ---------- */
+:root {
+  --blaze-bg:          #f4f4f7;   /* toolbars, sidebar */
+  --blaze-surface:     #ffffff;   /* selected tab, panels, focused urlbar */
+  --blaze-surface-2:   #ececf1;   /* urlbar, hover wells */
+  --blaze-border:      #dcdce4;
+  --blaze-field-border:#85859a;   /* input outline: 3.3:1 on toolbar, 3.6:1 on the field */
+  --blaze-fg:          #1b1b22;
+  --blaze-muted:       #62626f;
+  --blaze-accent:      #ff6a1a;   /* fills, rings, indicators */
+  --blaze-accent-text: #b93c00;   /* accent used as TEXT (AA on light surfaces) */
+  --blaze-ring:        #e0530a;   /* focus ring: >= 3:1 against every light surface it sits on */
+  --blaze-on-accent:   #14141a;   /* text on top of an accent fill */
+  --blaze-radius:      10px;
+  --blaze-radius-lg:   14px;
+}
+
+/* ---------- tokens: Ember (dark) ---------- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --blaze-bg:          #14141a;
+    --blaze-surface:     #1c1c24;
+    --blaze-surface-2:   #25252f;
+    --blaze-border:      #2e2e3a;
+    --blaze-field-border:#6a6a7a;
+    --blaze-fg:          #ececf1;
+    --blaze-muted:       #9a9aa8;
+    --blaze-accent-text: #ff8a4c;
+    --blaze-ring:        #ff6a1a;
+  }
+}
+
+/* ---------- map tokens onto Firefox's own theme variables (sturdier than structural selectors) ---------- */
+:root {
+  --toolbar-bgcolor: var(--blaze-bg) !important;
+  --toolbar-color: var(--blaze-fg) !important;
+  --lwt-accent-color: var(--blaze-bg) !important;
+  --lwt-text-color: var(--blaze-fg) !important;
+  --toolbarbutton-icon-fill: var(--blaze-muted) !important;
+  --toolbarbutton-hover-background: color-mix(in srgb, var(--blaze-fg) 9%, transparent) !important;
+  --toolbarbutton-active-background: color-mix(in srgb, var(--blaze-fg) 15%, transparent) !important;
+  --toolbarbutton-hover-bordercolor: transparent !important;
+  --toolbarbutton-active-bordercolor: transparent !important;
+  --toolbarbutton-border-radius: 8px !important;
+
+  --toolbar-field-background-color: var(--blaze-surface) !important;
+  --toolbar-field-color: var(--blaze-fg) !important;
+  --toolbar-field-border-color: var(--blaze-field-border) !important;
+  --toolbar-field-focus-background-color: var(--blaze-surface) !important;
+  --toolbar-field-focus-color: var(--blaze-fg) !important;
+  --toolbar-field-focus-border-color: var(--blaze-ring) !important;
+  --focus-outline-color: var(--blaze-ring) !important;
+
+  --tab-selected-bgcolor: var(--blaze-accent) !important;
+  --tab-selected-textcolor: var(--blaze-on-accent) !important;
+  --tab-selected-outline-color: transparent !important;
+
+  --sidebar-background-color: var(--blaze-bg) !important;
+  --sidebar-text-color: var(--blaze-fg) !important;
+  --tabpanel-background-color: var(--blaze-bg) !important;
+  --chrome-content-separator-color: transparent !important;
+
+  --arrowpanel-background: var(--blaze-surface) !important;
+  --arrowpanel-color: var(--blaze-fg) !important;
+  --arrowpanel-border-color: var(--blaze-border) !important;
+  --arrowpanel-dimmed: color-mix(in srgb, var(--blaze-fg) 9%, transparent) !important;
+  --arrowpanel-border-radius: var(--blaze-radius-lg) !important;
+  --panel-border-radius: var(--blaze-radius-lg) !important;
+
+  --button-primary-bgcolor: var(--blaze-accent) !important;
+  --button-primary-color: var(--blaze-on-accent) !important;
+  --button-primary-hover-bgcolor: color-mix(in srgb, var(--blaze-accent) 88%, var(--blaze-fg)) !important;
+  --button-primary-active-bgcolor: color-mix(in srgb, var(--blaze-accent) 78%, var(--blaze-fg)) !important;
+  --link-color: var(--blaze-accent-text) !important;
+}
+
+/* ---------- toolbars: flat, no borders, no shadows ---------- */
+#navigator-toolbox { border: none !important; box-shadow: none !important; background: var(--blaze-bg) !important; }
+#nav-bar, #TabsToolbar, #titlebar, #PersonalToolbar {
+  background: var(--blaze-bg) !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+#nav-bar { padding-block: 3px !important; }
+
+/* ---------- address bar: pill, accent ring on focus ---------- */
+#urlbar { --urlbar-container-height: 36px !important; }
+#urlbar > .urlbar-background {
+  border-radius: 999px !important;
+  background: var(--blaze-surface) !important;
+  border: 1px solid var(--blaze-field-border) !important;
+  box-shadow: none !important;
+}
+#urlbar[focused] > #urlbar-background,
+#urlbar[open] > #urlbar > .urlbar-background {
+  background: var(--blaze-surface) !important;
+  border-color: var(--blaze-ring) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--blaze-ring) 22%, transparent) !important;
+}
+.urlbarView { border-radius: var(--blaze-radius-lg) !important; }
+.urlbarView-row[selected] { background: color-mix(in srgb, var(--blaze-accent) 16%, transparent) !important; }
+
+/* ---------- tabs ---------- */
+/* active tab: solid Blaze orange, dark text (6.4:1) */
+.tabbrowser-tab[selected] .tab-background {
+  background: var(--blaze-accent) !important;
+  border-radius: var(--blaze-radius) !important;
+  box-shadow: none !important;
+}
+.tabbrowser-tab[selected] .tab-label,
+.tabbrowser-tab[selected] .tab-close-button { color: var(--blaze-on-accent) !important; fill: var(--blaze-on-accent) !important; }
+.tabbrowser-tab:not([selected]):hover .tab-background {
+  background: color-mix(in srgb, var(--blaze-fg) 8%, transparent) !important;
+  border-radius: var(--blaze-radius) !important;
+}
+/* sleeping (unloaded) tabs are dimmed: they cost no RAM, and the user can see it */
+.tabbrowser-tab[pending] .tab-label { opacity: .55 !important; }
+.tab-label { font-weight: 500; }
+
+/* ---------- page area: rounded, separated from chrome by color only ---------- */
+#tabbrowser-tabpanels { border-radius: var(--blaze-radius) !important; overflow: clip; }
+findbar { background: var(--blaze-surface) !important; border: none !important; border-radius: var(--blaze-radius) !important; }
+
+/* ---------- Lite toggle: icon + the word "Lite", far right of the toolbar ---------- */
+#blaze-companion_blaze_local-browser-action {
+  order: 99;
+  border-radius: 999px !important;
+  padding-inline: 8px !important;
+}
+#blaze-companion_blaze_local-browser-action > .toolbarbutton-badge-stack { padding: 0 !important; }
+#blaze-companion_blaze_local-browser-action .toolbarbutton-text {
+  display: flex !important;
+  margin-inline-start: 5px !important;
+  font-weight: 600;
+  font-size: 12.5px;
+}
+#blaze-companion_blaze_local-browser-action[badge]:not([badge=""]) {
+  background: color-mix(in srgb, var(--blaze-accent) 18%, transparent) !important;
+  color: var(--blaze-accent-text) !important;
+}
+#blaze-companion_blaze_local-browser-action .toolbarbutton-badge { display: none !important; } /* pill color already says ON */
+
+/* ---------- remove chrome nobody needs ---------- */
+#firefox-view-button, #alltabs-button, .titlebar-spacer,
+#smartwindow-group-tabs-button, #ai-window-toggle, #fxa-toolbar-menu-button, #sidebar-button,
+#ipprotection-button, #nav-bar #new-tab-button { display: none !important; }  /* Mozilla VPN promo; duplicate + (the sidebar already has one) */
+
+/* ---------- minimalism: show only what is needed, reveal the rest on hover/focus ---------- */
+toolbarseparator, #urlbar-go-button { display: none !important; }
+#forward-button[disabled] { display: none !important; }              /* only appears when there is somewhere to go */
+#PanelUI-button { opacity: .75; }
+
+/* page-action icons (bookmark star, reader view, share...) appear only when the urlbar is hovered or focused */
+#page-action-buttons, #star-button-box, #tracking-protection-icon-container {
+  opacity: 0;
+  transition: opacity .12s;
+}
+#urlbar:hover #page-action-buttons, #urlbar[focused] #page-action-buttons,
+#urlbar:hover #star-button-box,     #urlbar[focused] #star-button-box,
+#urlbar:hover #tracking-protection-icon-container, #urlbar[focused] #tracking-protection-icon-container,
+#urlbar:focus-within #page-action-buttons { opacity: 1; }
+/* the lock icon and "Not secure" label are security signals: they are NEVER hidden or faded */
+#identity-box, #identity-icon-box, #identity-icon-label, #trust-icon-container, #trust-icon-container * { opacity: 1 !important; }
+
+/* tabs: no close button until hover (Ctrl+W still works); compact height */
+.tabbrowser-tab:not(:hover) .tab-close-button { display: none !important; }
+.tabbrowser-tab { --tab-min-height: 32px !important; }
+.tab-label-container { font-size: 13px; }
+
+/* quiet the remaining toolbar icons: muted until hovered */
+.toolbarbutton-1:not(:hover):not([open]):not([checked]) > .toolbarbutton-icon { opacity: .8; }
+
+/* ---------- motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}

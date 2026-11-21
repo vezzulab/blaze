@@ -1,0 +1,40 @@
+{
+  "manifest_version": 2,
+  "name": "Blaze Companion",
+  "version": "0.1.0",
+  "description": "Blaze: modo Lite para conexiones lentas.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "blaze-companion@blaze.local",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
+    }
+  },
+  "icons": {
+    "48": "icons/lite-on.svg"
+  },
+  "permissions": [
+    "webRequest",
+    "webRequestBlocking",
+    "http://*/*",
+    "https://*/*",
+    "storage",
+    "tabs"
+  ],
+  "background": {
+    "scripts": [
+      "background.js"
+    ],
+    "persistent": false
+  },
+  "browser_action": {
+    "default_title": "Lite",
+    "default_icon": "icons/lite-off.svg",
+    "default_popup": "popup/popup.html",
+    "default_area": "navbar"
+  }
+}

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lite</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main>
+    <header>
+      <div class="title">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6z" fill="currentColor"/></svg>
+        <label for="lite">Lite</label>
+      </div>
+      <span class="switch">
+        <input type="checkbox" id="lite" role="switch" aria-describedby="note">
+        <span class="track" aria-hidden="true"></span>
+      </span>
+    </header>
+    <p id="note" class="note">
+      Ahorra datos en conexiones lentas: no carga imágenes, fuentes ni video automático.
+      Hasta ~60&nbsp;% menos en páginas pesadas.
+    </p>
+    <p id="state" class="state" aria-live="polite"></p>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>

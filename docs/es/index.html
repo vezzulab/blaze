@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Blaze, un navegador basado en Firefox para conexiones lentas</title>
+  <meta name="description" content="Blaze es un navegador basado en Firefox, pensado para la velocidad y la ligereza: modo Lite, descargas que se reanudan, uBlock Origin y Privacy Badger preinstalados, y actualizaciones que decides tú.">
+  <meta name="theme-color" content="#14141a">
+  <link rel="icon" href="../assets/blaze.svg" type="image/svg+xml">
+  <link rel="preload" href="../assets/fonts/bricolage-grotesque-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../assets/site.css">
+  <meta property="og:title" content="Blaze, un navegador basado en Firefox para conexiones lentas">
+  <meta property="og:description" content="Menos bytes por página, descargas que se reanudan y privado por defecto.">
+  <meta property="og:image" content="https://vezzulab.github.io/blaze/assets/blaze-ember.png">
+  <link rel="alternate" hreflang="en" href="https://vezzulab.github.io/blaze/">
+</head>
+<body>
+<a class="skip" href="#main">Saltar al contenido</a>
+
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="./"><img src="../assets/blaze.svg" alt="" width="34" height="34">Blaze</a>
+    <nav class="top" aria-label="Principal">
+      <a href="#numbers">Números</a>
+      <a href="#install">Instalar</a>
+      <a href="https://github.com/vezzulab/blaze">GitHub</a>
+      <a href="../" hreflang="en" lang="en">English</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap hero">
+    <div>
+      <h1>Abre la web con una mala conexión.</h1>
+      <p class="lede">Blaze es un navegador basado en Firefox, pensado para la velocidad y la ligereza. Descarga menos por cada página, recuerda dónde se quedó una descarga y conserva uBlock Origin y Privacy Badger.</p>
+      <div class="actions">
+        <a class="btn" href="https://github.com/vezzulab/blaze/releases/latest">Descargar el AppImage</a>
+        <a href="https://github.com/vezzulab/blaze">Ver el código en GitHub</a>
+      </div>
+      <p class="status">Blaze está en alfa y funciona en Linux (x86_64). Hasta que se publique la primera versión, puedes compilarlo desde el código: los pasos están en el README.</p>
+    </div>
+
+    <aside class="weigh" aria-labelledby="weigh-h">
+      <h2 id="weigh-h">Lo que cuesta abrir cnn.com</h2>
+      <p class="sub">Bytes transferidos para la portada, sin caché, en la misma máquina y el mismo día.</p>
+
+      <div class="bar-row">
+        <div class="who"><span>Firefox, tal como viene</span><span class="size">6,8 MB</span></div>
+        <div class="track"><div class="fill" style="--w:100%;--c:var(--bar-default);--d:.1s"></div></div>
+        <div class="time">3 min 41 s a 256 kbps</div>
+      </div>
+      <div class="bar-row">
+        <div class="who"><span>Blaze</span><span class="size">4,7 MB</span></div>
+        <div class="track"><div class="fill" style="--w:69%;--c:var(--bar-blaze);--d:.3s"></div></div>
+        <div class="time">2 min 33 s, 31 % menos datos</div>
+      </div>
+      <div class="bar-row">
+        <div class="who"><span>Blaze con Lite activado</span><span class="size">3,8 MB</span></div>
+        <div class="track"><div class="fill" style="--w:56%;--c:var(--bar-lite);--d:.5s"></div></div>
+        <div class="time">2 min 5 s, 44 % menos datos</div>
+      </div>
+      <p class="fine">Los tiempos se calculan a partir de los bytes a 256 kbps; no se midieron. Una sola corrida por navegador, con Firefox 159 sin ventana en Fedora 44. <a href="https://github.com/vezzulab/blaze/blob/main/docs/BENCHMARKS.md">Método y límites</a>.</p>
+    </aside>
+  </div>
+
+  <section class="block" aria-labelledby="look">
+    <div class="wrap">
+      <h2 id="look">Plano, compacto y en dos tonos</h2>
+      <figure class="shots">
+        <div class="shot">
+          <img src="../assets/blaze-ash.png" width="1280" height="380" alt="Blaze en su tema claro, Ash: barra de direcciones redondeada, el interruptor Lite arriba a la derecha y una tira estrecha de pestañas a la derecha con la pestaña activa en naranja." loading="lazy">
+          <figcaption>Ash, el tema claro.</figcaption>
+        </div>
+        <div class="shot">
+          <img src="../assets/blaze-ember.png" width="1280" height="380" alt="Blaze en su tema oscuro, Ember: la misma disposición sobre un fondo casi negro, con cuatro pestañas en la tira de la derecha." loading="lazy">
+          <figcaption>Ember, el tema oscuro. Los dos siguen la configuración de tu sistema.</figcaption>
+        </div>
+      </figure>
+      <p class="cap" style="margin-top:1rem;color:var(--muted);font-size:.95rem;">Capturas de una ventana real de Blaze. Solo se ve la interfaz del navegador; el área de la página sale vacía por la forma en que se toman las capturas.</p>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="what">
+    <div class="wrap">
+      <h2 id="what">Lo que obtienes</h2>
+      <dl class="features">
+        <div>
+          <dt>Modo Lite</dt>
+          <dd>Un interruptor arriba a la derecha evita que se carguen imágenes, fuentes web y video. En páginas de noticias pesadas ahorró entre el 44 % y el 61 % de los bytes.</dd>
+        </div>
+        <div>
+          <dt>Descargas que se reanudan</dt>
+          <dd>El motor de descargas reparte un archivo en varias conexiones y continúa tras un cierre inesperado, un corte de luz o una conexión caída.
+            <small>Hoy funciona desde la línea de comandos y baja los componentes de Blaze. Conectarlo al botón de descargas del navegador es el siguiente paso.</small></dd>
+        </div>
+        <div>
+          <dt>Tus extensiones</dt>
+          <dd>uBlock Origin y Privacy Badger vienen instaladas. Cualquier otra de addons.mozilla.org se instala como siempre.</dd>
+        </div>
+        <div>
+          <dt>Spotify y Netflix funcionan</dt>
+          <dd>Widevine viene activado. Si prefieres no contactar los servidores de Google para eso, se apaga con un ajuste.</dd>
+        </div>
+        <div>
+          <dt>Privado por defecto</dt>
+          <dd>Sin telemetría, sin cuentas, solo HTTPS y protección estricta contra rastreo. Medimos todos los servidores con los que Blaze se conecta y los listamos todos.
+            <small><a href="https://github.com/vezzulab/blaze/blob/main/PRIVACY.md">Leer PRIVACY.md</a></small></dd>
+        </div>
+        <div>
+          <dt>Actualizaciones que decides tú</dt>
+          <dd>Blaze consulta GitHub una vez al día, te muestra qué trae la versión nueva y la descarga solo si dices que sí. Las versiones van firmadas y Blaze rechaza una actualización que no lo esté.</dd>
+        </div>
+        <div>
+          <dt>Un Firefox que no cambia solo</dt>
+          <dd>Blaze incluye un Firefox concreto y probado, y apaga el actualizador de Firefox, así que una actualización de Firefox no puede romper la interfaz. Las versiones nuevas de Firefox llegan dentro de las versiones de Blaze.</dd>
+        </div>
+        <div>
+          <dt>Pequeño en disco, ligero en memoria</dt>
+          <dd>La aplicación Blaze pesa 4,5 MB. En nuestras pruebas usó entre un 27 % y un 36 % menos memoria que Firefox tal como viene, con las mismas páginas abiertas.</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="block" id="numbers" aria-labelledby="num">
+    <div class="wrap">
+      <h2 id="num">Los números y dónde terminan</h2>
+      <p class="intro">Cada cifra es una sola corrida en una sola máquina. Tómalas como una dirección, no como una promesa.</p>
+      <div class="table-scroll">
+        <table class="data">
+          <caption>Memoria, todos los procesos de Firefox juntos (PSS)</caption>
+          <thead><tr><th scope="col">Escenario</th><th scope="col" class="num">Firefox</th><th scope="col" class="num">Blaze</th><th scope="col" class="num">Diferencia</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Una pestaña en blanco</th><td class="num">815 MB</td><td class="num">522 MB</td><td class="num good">36 % menos</td></tr>
+            <tr><th scope="row">Una pestaña, Wikipedia</th><td class="num">878 MB</td><td class="num">637 MB</td><td class="num good">27 % menos</td></tr>
+            <tr><th scope="row">Cuatro páginas a la vez</th><td class="num">1021 MB</td><td class="num">689 MB</td><td class="num good">33 % menos</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Blaze sigue siendo Firefox. Una pestaña con video cuesta lo que cuesta una pestaña con video, y unos 500 MB para una pestaña es el piso que encontramos con este motor. No podemos decir con honestidad que Blaze sea el navegador más ligero que existe: solo medimos Firefox, y los navegadores diminutos que dejan fuera la web moderna siempre usarán menos.</p>
+      <p>El primer arranque no es ligero. Blaze descarga Firefox una vez (86 MB, verificado contra un checksum publicado) y después Firefox baja unos 43 MB en segundo plano: Widevine 17 MB, listas de Safe Browsing 10 MB, listas de bloqueo de Mozilla 8 MB y las listas de uBlock Origin y Privacy Badger 5 MB. Todo se puede reanudar si la conexión se cae.</p>
+    </div>
+  </section>
+
+  <section class="block" id="install" aria-labelledby="inst">
+    <div class="wrap">
+      <h2 id="inst">Instalar</h2>
+      <ol class="steps">
+        <li><div><strong>Descarga el AppImage</strong> desde la <a href="https://github.com/vezzulab/blaze/releases">página de versiones</a>, cuando haya una publicada.</div></li>
+        <li><div><strong>Hazlo ejecutable y ábrelo.</strong>
+<pre><code>chmod +x Blaze-*-x86_64.AppImage
+./Blaze-*-x86_64.AppImage</code></pre></div></li>
+        <li><div><strong>Espera el primer arranque.</strong> Blaze descarga y verifica su Firefox. Si lo cierras a la mitad, continúa donde se quedó.</div></li>
+      </ol>
+      <p style="margin-top:1.5rem">¿Prefieres compilarlo tú? Necesitas el SDK de .NET 10; el README lista los comandos exactos.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="links">
+      <a href="https://github.com/vezzulab/blaze">Código</a>
+      <a href="https://github.com/vezzulab/blaze/blob/main/PRIVACY.md">Privacidad</a>
+      <a href="https://github.com/vezzulab/blaze/blob/main/SECURITY.md">Seguridad</a>
+      <a href="https://github.com/vezzulab/blaze/blob/main/docs/BENCHMARKS.md">Mediciones</a>
+      <a href="https://github.com/vezzulab/blaze/blob/main/LICENSE">Licencia MIT</a>
+    </div>
+    <p>Blaze no está afiliado ni respaldado por Mozilla. Firefox es una marca de la Mozilla Foundation. Blaze usa el Firefox oficial y no cambia su código fuente.</p>
+    <p>Esta página pesa unos 116 KB, no tiene scripts y no carga nada de otros sitios.</p>
+  </div>
+</footer>
+</body>
+</html>

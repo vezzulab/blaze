@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build:*)",
+      "Bash(dotnet publish:*)",
+      "Bash(dotnet run:*)",
+      "Bash(python3 tools/ui.py:*)",
+      "Bash(bash -n:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)"
+    ],
+    "deny": [
+      "Read(~/.config/blaze-signing/**)",
+      "Read(**/*.pem)"
+    ]
+  }
+}

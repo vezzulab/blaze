@@ -1,0 +1,18 @@
+# build output
+bin/
+obj/
+dist/
+*.AppImage
+*.part
+*.blazepart
+# local tooling
+__pycache__/
+node_modules/
+.vs/
+.idea/
+# secrets: never commit signing keys or tokens
+*.pem
+*.key
+.env
+# per-machine assistant settings
+.claude/settings.local.json
