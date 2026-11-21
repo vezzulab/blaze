@@ -153,17 +153,22 @@ findbar { background: var(--blaze-surface) !important; border: none !important; 
    If the system draws its own titlebar they are display:none and none of this applies.) */
 #nav-bar > .titlebar-buttonbox-container {
   order: 1000 !important;                       /* after Lite (99) and the menu, whatever side the system layout prefers */
-  margin-inline: 18px 12px !important;           /* gap from the menu, and clear of the window corner */
-  margin-block: 4px !important;
-  padding: 3px !important;
+  margin-inline: 18px 24px !important;           /* gap from the menu, and well clear of the window edge */
+  margin-block: 0 !important;
+  align-self: center !important;                 /* centred in the bar, never touching its top or bottom */
+  padding: 2px !important;
   align-items: center;
   border-radius: 12px;
   background: color-mix(in srgb, var(--blaze-fg) 7%, transparent);
   border: 1px solid var(--blaze-field-border);              /* the whole group reads as one separate control */
 }
-#nav-bar > .titlebar-buttonbox-container .titlebar-buttonbox { gap: 2px; }
+#nav-bar > .titlebar-buttonbox-container .titlebar-buttonbox { gap: 2px; flex-direction: row !important; }
+/* Fixed order, whatever the desktop's own button layout says (KDE/GTK can put Close first): minimize, maximize, CLOSE at the far right. */
+#nav-bar .titlebar-min { order: 1 !important; }
+#nav-bar .titlebar-max, #nav-bar .titlebar-restore { order: 2 !important; }
+#nav-bar .titlebar-close { order: 3 !important; }
 #nav-bar .titlebar-button {
-  width: 32px; height: 28px;
+  width: 30px; height: 22px;                    /* the whole group is ~28px tall inside a ~38px bar */
   border-radius: 8px !important;
   padding: 0 !important; margin: 0 !important;
 }
